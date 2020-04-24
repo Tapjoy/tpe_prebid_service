@@ -36,6 +36,12 @@ func main() {
 		glog.Fatalf("Configuration could not be loaded or did not pass validation: %v", err)
 	}
 
+	// write PID to file for deploy management
+	pid, err := handleDeployPID(cfg.DeployPIDPath, cfg.DeployPIDMode)
+	if err != nil {
+		glog.Fatalf("error writing pid[%d]: %s", pid, err)
+	}
+
 	err = serve(Rev, cfg)
 	if err != nil {
 		glog.Errorf("prebid-server failed: %v", err)

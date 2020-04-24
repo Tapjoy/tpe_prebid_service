@@ -4,6 +4,7 @@ capabilities:
   app:
     mediaTypes:
       - banner
+      - video # KANSAS: figure out what to do here
   site:
     mediaTypes:
       - banner

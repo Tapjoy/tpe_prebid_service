@@ -16,13 +16,38 @@ RUN apt-get update -q &&\
     apt-get install -y --no-install-recommends vim &&\
     rm -rf /var/lib/apt/lists/* /tmp/*
 
-WORKDIR /go/src/github.com/tapjoy/tpe_prebid_service
+WORKDIR /project
 
 ###################
 # Build-time prep #
 ###################
 
+FROM baseimage as artifact-prep
+
+# Copy local-to-builder files and folders into current directory (WORKDIR) of the container
+ADD . .
+
+# GitHub creds needed to fetch external dependencies from private repo(s) at build time
+ARG GITHUB_USER
+ARG GITHUB_TOKEN
+
+# Setup git to use HTTPS and environment credentials.
+RUN git config --global url."https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/".insteadOf "git@github.com:" &&\
+    git config --global url."https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com".insteadOf "https://github.com"
+
+# Remove untracked files and folders
+# Run artifact preparation steps (e.g. geoip, bundle install, etc)
+# Clean up
+RUN git clean -fxd &&\
+    make artifact-prep &&\
+    rm -rf .git /tmp/*
 
 ###################
 # Artifact target #
 ###################
+
+FROM baseimage as artifact
+COPY --from=artifact-prep /project /project
+
+# EXPOSE 8000
+# EXPOSE 8080

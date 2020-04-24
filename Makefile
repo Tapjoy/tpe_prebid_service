@@ -29,7 +29,7 @@ ifeq "$(adapter)" ""
 	@#./validate.sh
 else
 	@# TODO This needs to be updated to point to Tapjoy's fork, along with all similar references throughout the project.
-	go test github.com/prebid/prebid-server/adapters/$(adapter) -bench=.
+	@#go test github.com/prebid/prebid-server/adapters/$(adapter) -bench=.
 endif
 	@echo "`tput setaf 3`testing not yet implemented`tput sgr0`"
 

@@ -20,7 +20,7 @@ RUN apt-get update -q &&\
     rm -rf /var/lib/apt/lists/* /tmp/*
 
 CMD echo "setting work dir"
-WORKDIR /project
+WORKDIR /go/src/github.com/tapjoy/tpe_prebid_service
 
 ###################
 # Build-time prep #
@@ -53,7 +53,8 @@ RUN git clean -fxd &&\
 
 FROM baseimage as artifact
 CMD echo "artifact prep"
-COPY --from=artifact-prep /project /project
+COPY --from=artifact-prep /go/src/github.com/tapjoy/tpe_prebid_service /project
+WORKDIR /project
 
 # EXPOSE 8000
 # EXPOSE 8080

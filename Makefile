@@ -72,8 +72,10 @@ dev-clean: dev-deps
 
 GO_IMAGE ?= "golang:1.13"
 REGISTRY := localhost:5000/tapjoy
+IMAGE_NAME := ${REGISTRY}/${PROJECT_NAME}
 
 .PHONY: baseimage
+baseimage: IMAGE_TAG ?= baseimage
 baseimage: CACHE_DIR=.docker-build-cache
 baseimage:
 	@# The .docker-build-cache directory is a speed hack to avoid the Docker CLI unecessarily scanning the repo before build
@@ -83,7 +85,7 @@ baseimage:
 	docker build \
 		--build-arg GO_IMAGE=${GO_IMAGE} \
 		--target baseimage \
-		--tag ${REGISTRY}/${PROJECT_NAME}:baseimage \
+		--tag ${IMAGE_NAME}:${IMAGE_TAG} \
 		${CACHE_DIR}
 
 	@rm -rf ${CACHE_DIR}
@@ -92,7 +94,7 @@ baseimage:
 artifact:
 	docker build \
 		--target artifact \
-		--tag ${REGISTRY}/${PROJECT_NAME}:${GIT_SHA} \
+		--tag ${IMAGE_NAME}:${GIT_SHA} \
 		.
 
 .PHONY: artifact-prep
@@ -115,7 +117,7 @@ artifact-prep: binary
 
 .PHONY: artifact-publish
 artifact-publish: artifact
-	docker push ${REGISTRY}/${PROJECT_NAME}:${GIT_SHA}
+	docker push ${IMAGE_NAME}:${GIT_SHA}
 	@# We'll need to clean up after ourselves so long as legacy Jenkins is the builder component
-	docker rmi ${REGISTRY}/${PROJECT_NAME}:${GIT_SHA}
+	docker rmi ${IMAGE_NAME}:${GIT_SHA}
 	docker rmi `docker images -q -f dangling=true`

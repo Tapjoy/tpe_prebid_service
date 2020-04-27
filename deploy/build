@@ -24,7 +24,7 @@ function run_build() {
 
   # Build the base image for build container. If the Dockerfile hasn't changed, the image will
   # likely be in the Docker build cache already.
-  docker build --build-arg GO_IMAGE=${GO_IMAGE} --target baseimage -t "${IMAGE_NAMESPACE}/${PROJECT_NAME}:${IMAGE_TAG}" .
+  IMAGE_TAG=${IMAGE_TAG} make baseimage
 
   # Run the deployment artifact preparation steps (prepare_for_deployment function in entrypoint)
   ## - This Docker command will be run in the context of a `slugforge build` call by the Jenkins slug builder

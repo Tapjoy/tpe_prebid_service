@@ -70,25 +70,25 @@ dev-clean: dev-deps
 ## ARTIFACT RELATED TARGETS
 ########################################################################################################################
 
-GO_IMAGE ?= golang:1.13
-REGISTRY ?= localhost:5000/tapjoy
-IMAGE_NAME ?= ${REGISTRY}/${PROJECT_NAME}
+GO_IMAGE := golang:1.13
+REGISTRY := localhost:5000/tapjoy
+IMAGE_NAME := ${REGISTRY}/${PROJECT_NAME}
 
 .PHONY: baseimage
 baseimage: IMAGE_TAG ?= baseimage
-baseimage: CACHE := .docker-build-cache
+baseimage: CACHE_DIR := .docker-build-cache
 baseimage:
 	@# The .docker-build-cache directory is a speed hack to avoid the Docker CLI unecessarily scanning the repo before build
-	@mkdir -p ${CACHE}
-	@cp Dockerfile ${CACHE}
+	@mkdir -p ${CACHE_DIR}
+	@cp Dockerfile ${CACHE_DIR}
 
 	docker build \
 		--build-arg GO_IMAGE=${GO_IMAGE} \
 		--target baseimage \
 		--tag ${IMAGE_NAME}:${IMAGE_TAG} \
-		${CACHE}
+		${CACHE_DIR}
 
-	@rm -rf ${CACHE}
+	@rm -rf ${CACHE_DIR}
 
 .PHONY: artifact
 artifact:

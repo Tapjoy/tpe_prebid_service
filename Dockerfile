@@ -16,7 +16,7 @@ RUN apt-get update -q &&\
     apt-get install -y --no-install-recommends vim &&\
     rm -rf /var/lib/apt/lists/* /tmp/*
 
-WORKDIR /project
+WORKDIR /go/src/github.com/tapjoy/tpe_prebid_service
 
 ###################
 # Build-time prep #
@@ -47,7 +47,8 @@ RUN git clean -fxd &&\
 ###################
 
 FROM baseimage as artifact
-COPY --from=artifact-prep /project /project
+COPY --from=artifact-prep /go/src/github.com/tapjoy/tpe_prebid_service /project
+WORKDIR /project
 
 # EXPOSE 8000
 # EXPOSE 8080

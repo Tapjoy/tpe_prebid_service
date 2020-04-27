@@ -70,9 +70,9 @@ dev-clean: dev-deps
 ## ARTIFACT RELATED TARGETS
 ########################################################################################################################
 
-GO_IMAGE ?= "golang:1.13"
-REGISTRY := localhost:5000/tapjoy
-IMAGE_NAME := ${REGISTRY}/${PROJECT_NAME}
+GO_IMAGE ?= golang:1.13
+REGISTRY ?= localhost:5000/tapjoy
+IMAGE_NAME ?= ${REGISTRY}/${PROJECT_NAME}
 
 .PHONY: baseimage
 baseimage: IMAGE_TAG ?= baseimage
@@ -86,8 +86,7 @@ baseimage:
 		--build-arg GO_IMAGE=${GO_IMAGE} \
 		--target baseimage \
 		--tag ${IMAGE_NAME}:${IMAGE_TAG} \
-		.
-		# ${CACHE}
+		${CACHE}
 
 	@rm -rf ${CACHE}
 

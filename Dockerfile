@@ -42,5 +42,6 @@ FROM baseimage as artifact
 COPY --from=artifact-prep /go/src/github.com/tapjoy/tpe_prebid_service /project
 WORKDIR /project
 
-# EXPOSE 8000
-# EXPOSE 8080
+# @see https://github.com/Tapjoy/tpe_prebid_service/blob/9d0e0c46bb90a4fb818305b06d55725817882697/config/config.go#L570-L571
+EXPOSE 8000 # Viper port
+EXPOSE 6060 # Admin port

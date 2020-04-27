@@ -2,7 +2,10 @@ ARG GO_IMAGE
 ###################
 ### Base Image  ###
 ###################
+CMD echo "fetching Go image"
 FROM ${GO_IMAGE} as baseimage
+
+CMD echo "installing OS-level dependencies"
 
 # Install OS-level language locales
 ENV DEBIAN_FRONTEND=noninteractive LANG=en_US.UTF-8 LANGUAGE=en_US:en LC_ALL=en_US.UTF-8
@@ -11,17 +14,20 @@ RUN apt-get update -q &&\
     locale-gen $LANG && update-locale LANG=$LANG &&\
     rm -rf /var/lib/apt/lists/* /tmp/*
 
+CMD echo "installing moar deps"
 # We install OS-level dependencies we need to work with the project
 RUN apt-get update -q &&\
     apt-get install -y --no-install-recommends vim &&\
     rm -rf /var/lib/apt/lists/* /tmp/*
 
+CMD echo "setting work dir"
 WORKDIR /project
 
 ###################
 # Build-time prep #
 ###################
 
+CMD echo "build time prep"
 FROM baseimage as artifact-prep
 
 # Copy local-to-builder files and folders into current directory (WORKDIR) of the container
@@ -46,6 +52,7 @@ RUN git clean -fxd &&\
 # Artifact target #
 ###################
 
+CMD echo "artifact prep"
 FROM baseimage as artifact
 COPY --from=artifact-prep /project /project
 

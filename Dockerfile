@@ -2,7 +2,6 @@ ARG GO_IMAGE
 ###################
 ### Base Image  ###
 ###################
-CMD echo "fetching Go image"
 FROM ${GO_IMAGE} as baseimage
 
 CMD echo "installing OS-level dependencies"
@@ -27,8 +26,8 @@ WORKDIR /project
 # Build-time prep #
 ###################
 
-CMD echo "build time prep"
 FROM baseimage as artifact-prep
+CMD echo "build time prep"
 
 # Copy local-to-builder files and folders into current directory (WORKDIR) of the container
 ADD . .
@@ -52,8 +51,8 @@ RUN git clean -fxd &&\
 # Artifact target #
 ###################
 
-CMD echo "artifact prep"
 FROM baseimage as artifact
+CMD echo "artifact prep"
 COPY --from=artifact-prep /project /project
 
 # EXPOSE 8000

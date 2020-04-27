@@ -27,14 +27,6 @@ FROM baseimage as artifact-prep
 # Copy local-to-builder files and folders into current directory (WORKDIR) of the container
 ADD . .
 
-# GitHub creds needed to fetch external dependencies from private repo(s) at build time
-ARG GITHUB_USER
-ARG GITHUB_TOKEN
-
-# Setup git to use HTTPS and environment credentials.
-RUN git config --global url."https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/".insteadOf "git@github.com:" &&\
-    git config --global url."https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com".insteadOf "https://github.com"
-
 # Remove untracked files and folders
 # Run artifact preparation steps (e.g. geoip, bundle install, etc)
 # Clean up

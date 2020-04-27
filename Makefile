@@ -92,7 +92,6 @@ baseimage:
 artifact:
 	docker build \
 		--target artifact \
-		--build-arg GITHUB_TOKEN --build-arg GITHUB_USER \
 		--tag ${REGISTRY}/${PROJECT_NAME}:${GIT_SHA} \
 		.
 

@@ -1,4 +1,5 @@
 ARG GO_IMAGE
+CMD echo "${GO_IMAGE}"
 ###################
 ### Base Image  ###
 ###################

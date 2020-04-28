@@ -107,9 +107,13 @@ artifact-prep: build
 	echo ${GIT_SHA} > shafile
 
 	@# Remove everything but the binary and supporting files needed in production.
+	@### NOTES
 	@## We are keeping the `.git` directory around for slug artifacts, as `slugforge` needs it to be there in order to
 	@## properly name the slugs it builds.
-	rm -r `ls -A | grep -v -E "\.git|build|Makefile|Procfile|deploy|data|grace-shepherd|pids|db|bin"`
+	@##
+	@## We are keeping the `static` and `stored_requests` directories because there is a dependency on them in the
+	@## application config (`tpe_prebid_service/config/config.go`) and the compiled binary will not execute without them.
+	rm -r `ls -A | grep -v -E "\.git|build|Makefile|Procfile|deploy|data|grace-shepherd|pids|db|bin|static|stored_requests"`
 
 	@# Move the built binary and remove the build directory
 	@# Ensure the binary exists where our deployment tooling expects and remove the build directory

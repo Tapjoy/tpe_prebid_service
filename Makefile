@@ -33,14 +33,14 @@ else
 endif
 	@echo "`tput setaf 3`testing not yet implemented`tput sgr0`"
 
-# binary will ensure all of our tests pass and then build the go binary
-.PHONY: binary
-binary: LDFLAGS="-X main.Version=${VERSION} -X main.Build=${BUILD} -X main.GitSHA=${GIT_SHA}"
-binary: test
+# build will ensure all of our tests pass and then build the go binary
+.PHONY: build
+build: LDFLAGS="-X main.Version=${VERSION} -X main.Build=${BUILD} -X main.GitSHA=${GIT_SHA}"
+build: test
 	go build -v -ldflags=${LDFLAGS} -o=${BUILD_FILE} -mod=vendor .
 
 .PHONY: run
-run: clean binary
+run: clean build
 	${BUILD_FILE}
 
 .PHONY: clean
@@ -98,7 +98,7 @@ artifact:
 		.
 
 .PHONY: artifact-prep
-artifact-prep: binary
+artifact-prep: build
 	@# All build-time steps needed for preparing a deployment artifact should be contained here
 	@# This would generally be tasks like bundle installs, asset building, bundling GeoIP data and so on
 	@## NOTE: Once slugs of a project are no longer deployed, this task can be moved to the Dockerfile

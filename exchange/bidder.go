@@ -17,7 +17,6 @@ import (
 	"github.com/prebid/prebid-server/currencies"
 	"github.com/prebid/prebid-server/errortypes"
 	"github.com/prebid/prebid-server/openrtb_ext"
-	"golang.org/x/net/context/ctxhttp"
 )
 
 // adaptedBidder defines the contract needed to participate in an Auction within an Exchange.
@@ -82,7 +81,7 @@ type pbsOrtbSeatBid struct {
 //
 // The name refers to the "Adapter" architecture pattern, and should not be confused with a Prebid "Adapter"
 // (which is being phased out and replaced by Bidder for OpenRTB auctions)
-func adaptBidder(bidder adapters.Bidder, client *http.Client) adaptedBidder {
+func adaptBidder(bidder adapters.Bidder, client httpClient) adaptedBidder {
 	return &bidderAdapter{
 		Bidder: bidder,
 		Client: client,
@@ -91,7 +90,7 @@ func adaptBidder(bidder adapters.Bidder, client *http.Client) adaptedBidder {
 
 type bidderAdapter struct {
 	Bidder adapters.Bidder
-	Client *http.Client
+	Client httpClient
 }
 
 func (bidder *bidderAdapter) requestBid(ctx context.Context, request *openrtb.BidRequest, name openrtb_ext.BidderName, bidAdjustment float64, conversions currencies.Conversions, reqInfo *adapters.ExtraRequestInfo) (*pbsOrtbSeatBid, []error) {
@@ -295,7 +294,8 @@ func (bidder *bidderAdapter) doRequest(ctx context.Context, req *adapters.Reques
 	}
 	httpReq.Header = req.Headers
 
-	httpResp, err := ctxhttp.Do(ctx, bidder.Client, httpReq)
+	httpReq = httpReq.WithContext(ctx)
+	httpResp, err := bidder.Client.Do(httpReq)
 	if err != nil {
 		if err == context.DeadlineExceeded {
 			err = &errortypes.Timeout{Message: err.Error()}
@@ -348,7 +348,8 @@ func (bidder *bidderAdapter) doTimeoutNotification(timeoutBidder adapters.Timeou
 		httpReq, err := http.NewRequest(toReq.Method, toReq.Uri, bytes.NewBuffer(toReq.Body))
 		if err == nil {
 			httpReq.Header = req.Headers
-			ctxhttp.Do(ctx, bidder.Client, httpReq)
+			httpReq = httpReq.WithContext(ctx)
+			bidder.Client.Do(httpReq)
 			// No validation yet on sending notifications
 		}
 	}

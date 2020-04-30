@@ -17,8 +17,11 @@ import (
 	"github.com/prebid/prebid-server/errortypes"
 	"github.com/prebid/prebid-server/openrtb_ext"
 	"github.com/prebid/prebid-server/pbs"
-	"golang.org/x/net/context/ctxhttp"
 )
+
+type httpClient interface {
+	Do(*http.Request) (*http.Response, error)
+}
 
 type SovrnAdapter struct {
 	http *adapters.HTTPAdapter
@@ -96,7 +99,9 @@ func (s *SovrnAdapter) Call(ctx context.Context, req *pbs.PBSRequest, bidder *pb
 			httpReq.AddCookie(&http.Cookie{Name: "ljt_reader", Value: userID})
 		}
 	}
-	sResp, err := ctxhttp.Do(ctx, s.http.Client, httpReq)
+
+	httpReq = httpReq.WithContext(ctx)
+	sResp, err := s.http.Client.Do(httpReq)
 	if err != nil {
 		return nil, err
 	}
@@ -303,7 +308,7 @@ func NewSovrnAdapter(config *adapters.HTTPAdapterConfig, endpoint string) *Sovrn
 	return NewSovrnBidder(adapters.NewHTTPAdapter(config).Client, endpoint)
 }
 
-func NewSovrnBidder(client *http.Client, endpoint string) *SovrnAdapter {
+func NewSovrnBidder(client httpClient, endpoint string) *SovrnAdapter {
 	a := &adapters.HTTPAdapter{Client: client}
 
 	return &SovrnAdapter{

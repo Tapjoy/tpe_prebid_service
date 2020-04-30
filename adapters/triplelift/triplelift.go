@@ -11,6 +11,10 @@ import (
 	"github.com/prebid/prebid-server/openrtb_ext"
 )
 
+type httpClient interface {
+	Do(*http.Request) (*http.Response, error)
+}
+
 type TripleliftAdapter struct {
 	endpoint string
 }
@@ -141,7 +145,7 @@ func (a *TripleliftAdapter) MakeBids(internalRequest *openrtb.BidRequest, extern
 	return bidResponse, errs
 }
 
-func NewTripleliftBidder(client *http.Client, endpoint string) *TripleliftAdapter {
+func NewTripleliftBidder(client httpClient, endpoint string) *TripleliftAdapter {
 	return &TripleliftAdapter{
 		endpoint: endpoint}
 }

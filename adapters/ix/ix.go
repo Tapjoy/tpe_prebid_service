@@ -12,8 +12,6 @@ import (
 
 	"github.com/prebid/prebid-server/pbs"
 
-	"golang.org/x/net/context/ctxhttp"
-
 	"github.com/mxmCherry/openrtb"
 	"github.com/prebid/prebid-server/adapters"
 	"github.com/prebid/prebid-server/errortypes"
@@ -201,7 +199,8 @@ func (a *IxAdapter) callOne(ctx context.Context, reqJSON bytes.Buffer) (ixBidRes
 	httpReq.Header.Add("Content-Type", "application/json;charset=utf-8")
 	httpReq.Header.Add("Accept", "application/json")
 
-	ixResp, err := ctxhttp.Do(ctx, a.http.Client, httpReq)
+	httpReq = httpReq.WithContext(ctx)
+	ixResp, err := a.http.Client.Do(httpReq)
 	if err != nil {
 		return result, err
 	}

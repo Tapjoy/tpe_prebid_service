@@ -13,14 +13,16 @@ import (
 	"github.com/buger/jsonparser"
 	"github.com/prebid/prebid-server/pbs"
 
-	"golang.org/x/net/context/ctxhttp"
-
 	"github.com/mxmCherry/openrtb"
 	"github.com/prebid/prebid-server/adapters"
 	"github.com/prebid/prebid-server/errortypes"
 	"github.com/prebid/prebid-server/openrtb_ext"
 	"github.com/prebid/prebid-server/pbsmetrics"
 )
+
+type httpClient interface {
+	Do(*http.Request) (*http.Response, error)
+}
 
 type AppNexusAdapter struct {
 	http           *adapters.HTTPAdapter
@@ -206,7 +208,8 @@ func (a *AppNexusAdapter) Call(ctx context.Context, req *pbs.PBSRequest, bidder 
 	httpReq.Header.Add("Content-Type", "application/json;charset=utf-8")
 	httpReq.Header.Add("Accept", "application/json")
 
-	anResp, err := ctxhttp.Do(ctx, a.http.Client, httpReq)
+	httpReq = httpReq.WithContext(ctx)
+	anResp, err := a.http.Client.Do(httpReq)
 	if err != nil {
 		return nil, err
 	}
@@ -596,7 +599,7 @@ func NewAppNexusAdapter(config *adapters.HTTPAdapterConfig, endpoint, platformID
 	return NewAppNexusBidder(adapters.NewHTTPAdapter(config).Client, endpoint, platformID)
 }
 
-func NewAppNexusBidder(client *http.Client, endpoint, platformID string) *AppNexusAdapter {
+func NewAppNexusBidder(client httpClient, endpoint, platformID string) *AppNexusAdapter {
 	a := &adapters.HTTPAdapter{Client: client}
 
 	// Load custom options for our adapter (currently just a lookup table to convert appnexus => iab categories)

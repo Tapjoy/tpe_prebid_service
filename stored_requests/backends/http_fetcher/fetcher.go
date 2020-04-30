@@ -12,8 +12,11 @@ import (
 	"github.com/prebid/prebid-server/stored_requests"
 
 	"github.com/golang/glog"
-	"golang.org/x/net/context/ctxhttp"
 )
+
+type httpClient interface {
+	Do(*http.Request) (*http.Response, error)
+}
 
 // NewFetcher returns a Fetcher which uses the Client to pull data from the endpoint.
 //
@@ -36,7 +39,7 @@ import (
 // }
 //
 //
-func NewFetcher(client *http.Client, endpoint string) *HttpFetcher {
+func NewFetcher(client httpClient, endpoint string) *HttpFetcher {
 	// Do some work up-front to figure out if the (configurable) endpoint has a query string or not.
 	// When we build requests, we'll either want to add `?request-ids=...&imp-ids=...` _or_
 	// `&request-ids=...&imp-ids=...`, depending.
@@ -56,7 +59,7 @@ func NewFetcher(client *http.Client, endpoint string) *HttpFetcher {
 }
 
 type HttpFetcher struct {
-	client     *http.Client
+	client     httpClient
 	Endpoint   string
 	hasQuery   bool
 	Categories map[string]map[string]stored_requests.Category
@@ -72,7 +75,8 @@ func (fetcher *HttpFetcher) FetchRequests(ctx context.Context, requestIDs []stri
 		return nil, nil, []error{err}
 	}
 
-	httpResp, err := ctxhttp.Do(ctx, fetcher.client, httpReq)
+	httpReq = httpReq.WithContext(ctx)
+	httpResp, err := fetcher.client.Do(httpReq)
 	if err != nil {
 		return nil, nil, []error{err}
 	}
@@ -110,7 +114,8 @@ func (fetcher *HttpFetcher) FetchCategories(ctx context.Context, primaryAdServer
 		return "", err
 	}
 
-	httpResp, err := ctxhttp.Do(ctx, fetcher.client, httpReq)
+	httpReq = httpReq.WithContext(ctx)
+	httpResp, err := fetcher.client.Do(httpReq)
 	if err != nil {
 		return "", err
 	}

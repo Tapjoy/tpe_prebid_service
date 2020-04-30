@@ -17,11 +17,14 @@ import (
 	"github.com/prebid/prebid-server/errortypes"
 	"github.com/prebid/prebid-server/openrtb_ext"
 	"github.com/prebid/prebid-server/pbs"
-	"golang.org/x/net/context/ctxhttp"
 )
 
 const MAX_IMPRESSIONS_PUBMATIC = 30
 const bidTypeExtKey = "BidType"
+
+type httpClient interface {
+	Do(*http.Request) (*http.Response, error)
+}
 
 type PubmaticAdapter struct {
 	http *adapters.HTTPAdapter
@@ -222,7 +225,8 @@ func (a *PubmaticAdapter) Call(ctx context.Context, req *pbs.PBSRequest, bidder 
 		Value: userId,
 	})
 
-	pbResp, err := ctxhttp.Do(ctx, a.http.Client, httpReq)
+	httpReq = httpReq.WithContext(ctx)
+	pbResp, err := a.http.Client.Do(httpReq)
 	if err != nil {
 		return nil, err
 	}
@@ -602,7 +606,7 @@ func NewPubmaticAdapter(config *adapters.HTTPAdapterConfig, uri string) *Pubmati
 	}
 }
 
-func NewPubmaticBidder(client *http.Client, uri string) *PubmaticAdapter {
+func NewPubmaticBidder(client httpClient, uri string) *PubmaticAdapter {
 	a := &adapters.HTTPAdapter{Client: client}
 	return &PubmaticAdapter{
 		http: a,

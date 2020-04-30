@@ -15,7 +15,6 @@ import (
 	"github.com/prebid/prebid-server/errortypes"
 	"github.com/prebid/prebid-server/openrtb_ext"
 	"github.com/prebid/prebid-server/pbs"
-	"golang.org/x/net/context/ctxhttp"
 )
 
 type PulsePointAdapter struct {
@@ -125,7 +124,8 @@ func (a *PulsePointAdapter) Call(ctx context.Context, req *pbs.PBSRequest, bidde
 	httpReq.Header.Add("Content-Type", "application/json;charset=utf-8")
 	httpReq.Header.Add("Accept", "application/json")
 
-	ppResp, err := ctxhttp.Do(ctx, a.http.Client, httpReq)
+	httpReq = httpReq.WithContext(ctx)
+	ppResp, err := a.http.Client.Do(httpReq)
 	if err != nil {
 		return nil, err
 	}

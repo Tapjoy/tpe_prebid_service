@@ -19,7 +19,6 @@ import (
 
 	"github.com/buger/jsonparser"
 	"github.com/mxmCherry/openrtb"
-	"golang.org/x/net/context/ctxhttp"
 )
 
 type AdformAdapter struct {
@@ -76,6 +75,10 @@ type adformBid struct {
 	CreativeId   string  `json:"win_crid,omitempty"`
 }
 
+type httpClient interface {
+	Do(*http.Request) (*http.Response, error)
+}
+
 const priceTypeGross = "gross"
 const priceTypeNet = "net"
 const defaultCurrency = "USD"
@@ -122,7 +125,8 @@ func (a *AdformAdapter) Call(ctx context.Context, request *pbs.PBSRequest, bidde
 
 	httpRequest.Header = adformRequest.buildAdformHeaders(a)
 
-	response, err := ctxhttp.Do(ctx, a.http.Client, httpRequest)
+	httpRequest = httpRequest.WithContext(ctx)
+	response, err := a.http.Client.Do(httpRequest)
 	if err != nil {
 		return nil, err
 	}
@@ -366,7 +370,7 @@ func parseAdformBids(response []byte) ([]*adformBid, error) {
 
 // BIDDER Interface
 
-func NewAdformBidder(client *http.Client, endpointURL string) *AdformAdapter {
+func NewAdformBidder(client httpClient, endpointURL string) *AdformAdapter {
 	a := &adapters.HTTPAdapter{Client: client}
 	var uriObj *url.URL
 	uriObj, err := url.Parse(endpointURL)

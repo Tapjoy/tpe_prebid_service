@@ -3,12 +3,17 @@ package unruly
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+
 	"github.com/mxmCherry/openrtb"
 	"github.com/prebid/prebid-server/adapters"
 	"github.com/prebid/prebid-server/errortypes"
 	"github.com/prebid/prebid-server/openrtb_ext"
-	"net/http"
 )
+
+type httpClient interface {
+	Do(*http.Request) (*http.Response, error)
+}
 
 type UnrulyAdapter struct {
 	http *adapters.HTTPAdapter
@@ -23,7 +28,7 @@ func (a *UnrulyAdapter) SkipNoCookies() bool {
 	return false
 }
 
-func GetClient(config *adapters.HTTPAdapterConfig) *http.Client {
+func GetClient(config *adapters.HTTPAdapterConfig) httpClient {
 	return adapters.NewHTTPAdapter(config).Client
 }
 
@@ -31,7 +36,7 @@ func NewUnrulyAdapter(config *adapters.HTTPAdapterConfig, endpoint string) *Unru
 	return NewUnrulyBidder(GetClient(config), endpoint)
 }
 
-func NewUnrulyBidder(client *http.Client, endpoint string) *UnrulyAdapter {
+func NewUnrulyBidder(client httpClient, endpoint string) *UnrulyAdapter {
 	clientAdapter := &adapters.HTTPAdapter{Client: client}
 
 	return &UnrulyAdapter{

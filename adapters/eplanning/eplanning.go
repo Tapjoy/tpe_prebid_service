@@ -30,6 +30,10 @@ var cleanNameSteps = []cleanNameStep{
 	{regexp.MustCompile(`^_+|_+$`), ""},
 }
 
+type httpClient interface {
+	Do(*http.Request) (*http.Response, error)
+}
+
 type cleanNameStep struct {
 	expression        *regexp.Regexp
 	replacementString string
@@ -277,7 +281,7 @@ func (adapter *EPlanningAdapter) MakeBids(internalRequest *openrtb.BidRequest, e
 	return bidResponse, nil
 }
 
-func NewEPlanningBidder(client *http.Client, endpoint string) *EPlanningAdapter {
+func NewEPlanningBidder(client httpClient, endpoint string) *EPlanningAdapter {
 	adapter := &adapters.HTTPAdapter{Client: client}
 
 	return &EPlanningAdapter{

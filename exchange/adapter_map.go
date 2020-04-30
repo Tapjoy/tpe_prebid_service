@@ -68,10 +68,14 @@ import (
 	"github.com/prebid/prebid-server/openrtb_ext"
 )
 
+type httpClient interface {
+	Do(*http.Request) (*http.Response, error)
+}
+
 // The newAdapterMap function is segregated to its own file to make it a simple and clean location for each Adapter
 // to register itself. No wading through Exchange code to find it.
 
-func newAdapterMap(client *http.Client, cfg *config.Configuration, infos adapters.BidderInfos) map[openrtb_ext.BidderName]adaptedBidder {
+func newAdapterMap(client httpClient, cfg *config.Configuration, infos adapters.BidderInfos) map[openrtb_ext.BidderName]adaptedBidder {
 	ortbBidders := map[openrtb_ext.BidderName]adapters.Bidder{
 		openrtb_ext.Bidder33Across:     ttx.New33AcrossBidder(cfg.Adapters[string(openrtb_ext.Bidder33Across)].Endpoint),
 		openrtb_ext.BidderAdform:       adform.NewAdformBidder(client, cfg.Adapters[string(openrtb_ext.BidderAdform)].Endpoint),

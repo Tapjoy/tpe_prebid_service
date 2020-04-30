@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
-	"net/http"
 	"runtime/debug"
 	"sort"
 	"strings"
@@ -71,7 +70,7 @@ type bidResponseWrapper struct {
 	bidder       openrtb_ext.BidderName
 }
 
-func NewExchange(client *http.Client, cache prebid_cache_client.Client, cfg *config.Configuration, metricsEngine pbsmetrics.MetricsEngine, infos adapters.BidderInfos, gDPR gdpr.Permissions, currencyConverter *currencies.RateConverter) Exchange {
+func NewExchange(client httpClient, cache prebid_cache_client.Client, cfg *config.Configuration, metricsEngine pbsmetrics.MetricsEngine, infos adapters.BidderInfos, gDPR gdpr.Permissions, currencyConverter *currencies.RateConverter) Exchange {
 	e := new(exchange)
 
 	e.adapterMap = newAdapterMap(client, cfg, infos)

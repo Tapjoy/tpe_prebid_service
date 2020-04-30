@@ -18,6 +18,10 @@ import (
 	"github.com/prebid/prebid-server/openrtb_ext"
 )
 
+type httpClient interface {
+	Do(*http.Request) (*http.Response, error)
+}
+
 type FacebookAdapter struct {
 	http         *adapters.HTTPAdapter
 	URI          string
@@ -425,7 +429,7 @@ func resolveImpType(imp *openrtb.Imp) (openrtb_ext.BidType, bool) {
 	return openrtb_ext.BidTypeBanner, false
 }
 
-func NewFacebookBidder(client *http.Client, platformID string, appSecret string) adapters.Bidder {
+func NewFacebookBidder(client httpClient, platformID string, appSecret string) adapters.Bidder {
 	if platformID == "" {
 		glog.Errorf("No facebook partnerID specified. Calls to the Audience Network will fail. Did you set adapters.facebook.platform_id in the app config?")
 		return &adapters.MisconfiguredBidder{

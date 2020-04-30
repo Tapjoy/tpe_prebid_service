@@ -5,16 +5,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/prebid/prebid-server/openrtb_ext"
 	"io/ioutil"
 	"net/http"
 	"strings"
+
+	"github.com/prebid/prebid-server/openrtb_ext"
 
 	"github.com/mxmCherry/openrtb"
 	"github.com/prebid/prebid-server/adapters"
 	"github.com/prebid/prebid-server/errortypes"
 	"github.com/prebid/prebid-server/pbs"
-	"golang.org/x/net/context/ctxhttp"
 )
 
 type LifestreetAdapter struct {
@@ -41,7 +41,8 @@ func (a *LifestreetAdapter) callOne(ctx context.Context, req *pbs.PBSRequest, re
 	httpReq.Header.Add("Content-Type", "application/json;charset=utf-8")
 	httpReq.Header.Add("Accept", "application/json")
 
-	lsmResp, e := ctxhttp.Do(ctx, a.http.Client, httpReq)
+	httpReq = httpReq.WithContext(ctx)
+	lsmResp, e := a.http.Client.Do(httpReq)
 	if e != nil {
 		err = e
 		return

@@ -2,7 +2,6 @@ package gdpr
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/prebid/go-gdpr/vendorlist"
 	"github.com/prebid/prebid-server/config"
@@ -32,7 +31,7 @@ const (
 )
 
 // NewPermissions gets an instance of the Permissions for use elsewhere in the project.
-func NewPermissions(ctx context.Context, cfg config.GDPR, vendorIDs map[openrtb_ext.BidderName]uint16, client *http.Client) Permissions {
+func NewPermissions(ctx context.Context, cfg config.GDPR, vendorIDs map[openrtb_ext.BidderName]uint16, client httpClient) Permissions {
 	// If the host doesn't buy into the IAB GDPR consent framework, then save some cycles and let all syncs happen.
 	if cfg.HostVendorID == 0 {
 		return AlwaysAllow{}

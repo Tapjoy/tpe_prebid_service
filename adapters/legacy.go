@@ -44,8 +44,12 @@ type HTTPAdapterConfig struct {
 	MaxConnsPerHost int
 }
 
+type httpClient interface {
+	Do(*http.Request) (*http.Response, error)
+}
+
 type HTTPAdapter struct {
-	Client *http.Client
+	Client httpClient
 }
 
 // DefaultHTTPAdapterConfig is an HTTPAdapterConfig that chooses sensible default values.

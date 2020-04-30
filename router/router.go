@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/http/pprof"
 	"path/filepath"
 	"strings"
 	"time"
@@ -28,17 +29,20 @@ import (
 	"github.com/prebid/prebid-server/cache/filecache"
 	"github.com/prebid/prebid-server/cache/postgrescache"
 	"github.com/prebid/prebid-server/config"
+	ctx "github.com/prebid/prebid-server/context"
 	"github.com/prebid/prebid-server/currencies"
 	"github.com/prebid/prebid-server/endpoints"
 	infoEndpoints "github.com/prebid/prebid-server/endpoints/info"
 	"github.com/prebid/prebid-server/endpoints/openrtb2"
 	"github.com/prebid/prebid-server/exchange"
 	"github.com/prebid/prebid-server/gdpr"
+	"github.com/prebid/prebid-server/monitoring/newrelic"
 	"github.com/prebid/prebid-server/openrtb_ext"
 	"github.com/prebid/prebid-server/pbs"
 	metricsConf "github.com/prebid/prebid-server/pbsmetrics/config"
 	pbc "github.com/prebid/prebid-server/prebid_cache_client"
 	"github.com/prebid/prebid-server/router/aspects"
+	"github.com/prebid/prebid-server/server"
 	"github.com/prebid/prebid-server/ssl"
 	storedRequestsConf "github.com/prebid/prebid-server/stored_requests/config"
 	"github.com/prebid/prebid-server/usersync/usersyncers"
@@ -173,14 +177,21 @@ type Router struct {
 	MetricsEngine   *metricsConf.DetailedMetricsEngine
 	ParamsValidator openrtb_ext.BidderParamValidator
 	Shutdown        func()
+	Middleware      []server.Middleware
 }
 
-func New(cfg *config.Configuration, rateConvertor *currencies.RateConverter) (r *Router, err error) {
+func New(cfg *config.Configuration, rateConvertor *currencies.RateConverter, nrApp newrelic.Application) (r *Router, err error) {
 	const schemaDirectory = "./static/bidder-params"
 	const infoDirectory = "./static/bidder-info"
 
+	middleware, err := server.MakeMiddleware(nrApp)
+	if err != nil {
+		return nil, fmt.Errorf("Could not make middleware: %s", err)
+	}
+
 	r = &Router{
-		Router: httprouter.New(),
+		Router:     httprouter.New(),
+		Middleware: middleware,
 	}
 
 	// For bid processing, we need both the hardcoded certificates and the certificates found in container's
@@ -199,6 +210,18 @@ func New(cfg *config.Configuration, rateConvertor *currencies.RateConverter) (r 
 			IdleConnTimeout:     time.Duration(cfg.Client.IdleConnTimeout) * time.Second,
 			TLSClientConfig:     &tls.Config{RootCAs: certPool},
 		},
+	}
+
+	// http client w/ context
+	clientWithContext, err := ctx.NewClient(generalHttpClient)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP client w/ context could not be created: %v", err)
+	}
+
+	// http client w/ newrelic monitoring
+	clientWitNR, err := newrelic.NewClient(clientWithContext)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP client w/ newrelic monitoring could not be created: %v", err)
 	}
 
 	cacheHttpClient := &http.Client{
@@ -241,11 +264,11 @@ func New(cfg *config.Configuration, rateConvertor *currencies.RateConverter) (r 
 	defaultAliases, defReqJSON := readDefaultRequest(cfg.DefReqConfig)
 
 	syncers := usersyncers.NewSyncerMap(cfg)
-	gdprPerms := gdpr.NewPermissions(context.Background(), cfg.GDPR, adapters.GDPRAwareSyncerIDs(syncers), generalHttpClient)
+	gdprPerms := gdpr.NewPermissions(context.Background(), cfg.GDPR, adapters.GDPRAwareSyncerIDs(syncers), clientWitNR)
 
 	exchanges = newExchangeMap(cfg)
 	cacheClient := pbc.NewClient(cacheHttpClient, &cfg.CacheURL, &cfg.ExtCacheURL, r.MetricsEngine)
-	theExchange := exchange.NewExchange(generalHttpClient, cacheClient, cfg, r.MetricsEngine, bidderInfos, gdprPerms, rateConvertor)
+	theExchange := exchange.NewExchange(clientWitNR, cacheClient, cfg, r.MetricsEngine, bidderInfos, gdprPerms, rateConvertor)
 
 	openrtbEndpoint, err := openrtb2.NewEndpoint(theExchange, paramsValidator, fetcher, categoriesFetcher, cfg, r.MetricsEngine, pbsAnalytics, disabledBidders, defReqJSON, activeBiddersMap)
 
@@ -358,4 +381,28 @@ func readDefaultRequest(defReqConfig config.DefReqConfig) (map[string]string, []
 		return aliases, defReqJSON
 	}
 	return aliases, []byte{}
+}
+
+func register(path string, router Router) *http.ServeMux {
+	mux := http.NewServeMux()
+
+	// apply route specific middleware and register
+	mux.Handle(path, applyMiddleware(router, router.Middleware))
+
+	// for profiling
+	mux.HandleFunc("/debug/pprof/", pprof.Index)
+	mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+	mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
+
+	return mux
+}
+
+func applyMiddleware(handler http.Handler, middleware []server.Middleware) http.Handler {
+	for _, m := range middleware {
+		handler = m(handler)
+	}
+
+	return handler
 }

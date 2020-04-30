@@ -2,12 +2,14 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"math/rand"
 	"net/http"
 	"time"
 
 	"github.com/prebid/prebid-server/config"
 	"github.com/prebid/prebid-server/currencies"
+	"github.com/prebid/prebid-server/monitoring/newrelic"
 	pbc "github.com/prebid/prebid-server/prebid_cache_client"
 	"github.com/prebid/prebid-server/router"
 	"github.com/prebid/prebid-server/server"
@@ -62,14 +64,21 @@ func serve(revision string, cfg *config.Configuration) error {
 	fetchingInterval := time.Duration(cfg.CurrencyConverter.FetchIntervalSeconds) * time.Second
 	currencyConverter := currencies.NewRateConverter(&http.Client{}, cfg.CurrencyConverter.FetchURL, fetchingInterval)
 
-	r, err := router.New(cfg, currencyConverter)
+	// shared: newrelic
+	nrApp, err := newrelic.NewApplication(cfg.Monitoring.NewRelic)
+	if err != nil {
+		return fmt.Errorf("error creating newrelic app: %s", err)
+	}
+
+	r, err := router.New(cfg, currencyConverter, nrApp)
 	if err != nil {
 		return err
 	}
 
 	pbc.InitPrebidCache(cfg.CacheURL.GetBaseURL())
 
-	corsRouter := router.SupportCORS(r)
+	mux := server.Register(r)
+	corsRouter := router.SupportCORS(mux)
 	server.Listen(cfg, router.NoCache{Handler: corsRouter}, router.Admin(revision, currencyConverter), r.MetricsEngine)
 
 	r.Shutdown()

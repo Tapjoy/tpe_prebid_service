@@ -3,13 +3,18 @@ package triplelift_native
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+
 	"github.com/golang/glog"
 	"github.com/mxmCherry/openrtb"
 	"github.com/prebid/prebid-server/adapters"
 	"github.com/prebid/prebid-server/errortypes"
 	"github.com/prebid/prebid-server/openrtb_ext"
-	"net/http"
 )
+
+type httpClient interface {
+	Do(*http.Request) (*http.Response, error)
+}
 
 type TripleliftNativeAdapter struct {
 	endpoint string
@@ -174,7 +179,7 @@ func (a *TripleliftNativeAdapter) MakeBids(internalRequest *openrtb.BidRequest, 
 	return bidResponse, errs
 }
 
-func NewTripleliftNativeBidder(client *http.Client, endpoint string, extraInfo string) adapters.Bidder {
+func NewTripleliftNativeBidder(client httpClient, endpoint string, extraInfo string) adapters.Bidder {
 	var extInfo TripleliftNativeExtInfo
 
 	if len(extraInfo) == 0 {

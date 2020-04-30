@@ -13,13 +13,15 @@ import (
 	"github.com/golang/glog"
 	"github.com/prebid/prebid-server/pbs"
 
-	"golang.org/x/net/context/ctxhttp"
-
 	"github.com/mxmCherry/openrtb"
 	"github.com/prebid/prebid-server/adapters"
 	"github.com/prebid/prebid-server/errortypes"
 	"github.com/prebid/prebid-server/openrtb_ext"
 )
+
+type httpClient interface {
+	Do(*http.Request) (*http.Response, error)
+}
 
 // Region ...
 type Region string
@@ -293,7 +295,8 @@ func (a *RubiconAdapter) callOne(ctx context.Context, reqJSON bytes.Buffer) (res
 	httpReq.Header.Add("User-Agent", "prebid-server/1.0")
 	httpReq.SetBasicAuth(a.XAPIUsername, a.XAPIPassword)
 
-	rubiResp, e := ctxhttp.Do(ctx, a.http.Client, httpReq)
+	httpReq = httpReq.WithContext(ctx)
+	rubiResp, e := a.http.Client.Do(httpReq)
 	if e != nil {
 		err = e
 		return
@@ -561,7 +564,7 @@ func NewRubiconAdapter(config *adapters.HTTPAdapterConfig, uri string, xuser str
 	return NewRubiconBidder(adapters.NewHTTPAdapter(config).Client, uri, xuser, xpass, tracker, useast, uswest, eu, apac)
 }
 
-func NewRubiconBidder(client *http.Client, uri string, xuser string, xpass string, tracker string, useast string, uswest string, eu string, apac string) *RubiconAdapter {
+func NewRubiconBidder(client httpClient, uri string, xuser string, xpass string, tracker string, useast string, uswest string, eu string, apac string) *RubiconAdapter {
 	a := &adapters.HTTPAdapter{Client: client}
 
 	uri = appendTrackerToUrl(uri, tracker)

@@ -12,6 +12,10 @@ import (
 	"github.com/prebid/prebid-server/openrtb_ext"
 )
 
+type httpClient interface {
+	Do(*http.Request) (*http.Response, error)
+}
+
 type VerizonMediaAdapter struct {
 	http *adapters.HTTPAdapter
 	URI  string
@@ -214,7 +218,7 @@ func NewVerizonMediaAdapter(config *adapters.HTTPAdapterConfig, uri string) *Ver
 	}
 }
 
-func NewVerizonMediaBidder(client *http.Client, endpoint string) *VerizonMediaAdapter {
+func NewVerizonMediaBidder(client httpClient, endpoint string) *VerizonMediaAdapter {
 	a := &adapters.HTTPAdapter{Client: client}
 	return &VerizonMediaAdapter{
 		http: a,

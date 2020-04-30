@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// WritePIDFile writes the process identification number (PID) of ad_service
+// WritePIDFile writes the process identification number (PID) of tpe_prebid_service
 // to a file for Ops `grace-shepherd.sh` script to manage the app
 func WritePIDFile(dir string, mode os.FileMode) (int, error) {
 	if dir == "" {

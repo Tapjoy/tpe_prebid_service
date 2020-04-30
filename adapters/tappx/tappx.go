@@ -3,28 +3,33 @@ package tappx
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/url"
+	"strconv"
+	"text/template"
+	"time"
+
 	"github.com/golang/glog"
 	"github.com/mxmCherry/openrtb"
 	"github.com/prebid/prebid-server/adapters"
 	"github.com/prebid/prebid-server/errortypes"
 	"github.com/prebid/prebid-server/macros"
 	"github.com/prebid/prebid-server/openrtb_ext"
-	"net/http"
-	"net/url"
-	"strconv"
-	"text/template"
-	"time"
 )
 
 const TAPPX_BIDDER_VERSION = "1.1"
 const TYPE_CNN = "prebid"
+
+type httpClient interface {
+	Do(*http.Request) (*http.Response, error)
+}
 
 type TappxAdapter struct {
 	http             *adapters.HTTPAdapter
 	endpointTemplate template.Template
 }
 
-func NewTappxBidder(client *http.Client, endpointTemplate string) *TappxAdapter {
+func NewTappxBidder(client httpClient, endpointTemplate string) *TappxAdapter {
 	a := &adapters.HTTPAdapter{Client: client}
 	template, err := template.New("endpointTemplate").Parse(endpointTemplate)
 	if err != nil {

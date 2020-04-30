@@ -72,6 +72,21 @@ type Configuration struct {
 	DeployPIDEnabled bool        `mapstructure:"deploy_pid_enabled"`
 	DeployPIDPath    string      `mapstructure:"deploy_pid_path"`
 	DeployPIDMode    os.FileMode `mapstructure:"deploy_pid_mode"`
+
+	// Monitoring
+	Monitoring Monitoring `mapstructure:"monitoring"`
+}
+
+// Monitoring ...
+type Monitoring struct {
+	NewRelic NewRelic `mapstructure:"newrelic"`
+}
+
+// NewRelic ...
+type NewRelic struct {
+	AppName    string `mapstructure:"app_name"`
+	LicenseKey string `mapstructure:"license_key"`
+	DebugMode  bool   `mapstructure:"debug_mode"`
 }
 
 const MIN_COOKIE_SIZE_BYTES = 500
@@ -623,6 +638,9 @@ func SetupViper(v *viper.Viper, filename string) {
 	v.SetDefault("metrics.prometheus.namespace", "")
 	v.SetDefault("metrics.prometheus.subsystem", "")
 	v.SetDefault("metrics.prometheus.timeout_ms", 10000)
+	v.SetDefault("monitoring.newrelic.app_name", "")
+	v.SetDefault("monitoring.newrelic.licence_key", "")
+	v.SetDefault("monitoring.newrelic.debug_mode", true)
 	v.SetDefault("datacache.type", "dummy")
 	v.SetDefault("datacache.filename", "")
 	v.SetDefault("datacache.cache_size", 0)

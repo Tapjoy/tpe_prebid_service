@@ -3,12 +3,17 @@ package sonobi
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+
 	"github.com/mxmCherry/openrtb"
 	"github.com/prebid/prebid-server/adapters"
 	"github.com/prebid/prebid-server/errortypes"
 	"github.com/prebid/prebid-server/openrtb_ext"
-	"net/http"
 )
+
+type httpClient interface {
+	Do(*http.Request) (*http.Response, error)
+}
 
 // SonobiAdapter - Sonobi SonobiAdapter definition
 type SonobiAdapter struct {
@@ -32,7 +37,7 @@ func NewSonobiAdapter(config *adapters.HTTPAdapterConfig, endpoint string) *Sono
 }
 
 // NewSonobiBidder Initializes the Bidder
-func NewSonobiBidder(client *http.Client, endpoint string) *SonobiAdapter {
+func NewSonobiBidder(client httpClient, endpoint string) *SonobiAdapter {
 	a := &adapters.HTTPAdapter{Client: client}
 
 	return &SonobiAdapter{

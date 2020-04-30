@@ -12,7 +12,6 @@ import (
 	"github.com/prebid/prebid-server/adapters"
 	"github.com/prebid/prebid-server/errortypes"
 	"github.com/prebid/prebid-server/pbs"
-	"golang.org/x/net/context/ctxhttp"
 )
 
 type ConversantAdapter struct {
@@ -180,7 +179,8 @@ func (a *ConversantAdapter) Call(ctx context.Context, req *pbs.PBSRequest, bidde
 	httpReq.Header.Add("Content-Type", "application/json")
 	httpReq.Header.Add("Accept", "application/json")
 
-	resp, err := ctxhttp.Do(ctx, a.http.Client, httpReq)
+	httpReq = httpReq.WithContext(ctx)
+	resp, err := a.http.Client.Do(httpReq)
 	if err != nil {
 		return nil, err
 	}

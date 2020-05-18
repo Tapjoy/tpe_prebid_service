@@ -13,10 +13,8 @@ BUILD_FILE    := ${BUILD_FOLDER}/prebid-server
 .PHONY: no-args
 no-args:
 
-# deps will clean out the vendor directory and use go mod for a fresh install
 .PHONY: deps
 deps:
-	GOPROXY="https://proxy.golang.org" go mod vendor -v && go mod tidy -v
 
 # test will ensure that all of our dependencies are available and run validate.sh
 .PHONY: test

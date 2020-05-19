@@ -145,7 +145,8 @@ func addRequestPropsAttributesHTTPRouter(span apitrace.Span, req *http.Request, 
 	reqMetaData := readReqBody(req, &RawUnmarshaler{})
 	span.SetAttributes(key.Int(fmt.Sprintf("req.size"), reqMetaData.ContentSize))
 
-	//tracing.AddInterfaceToSpan(span, fmt.Sprintf("req.body"), reqMetaData.Value)
+	// add value to span
+	tracing.AddInterfaceToSpan(span, fmt.Sprintf("req.body"), reqMetaData.Value)
 }
 
 type Unmarshaler interface {

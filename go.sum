@@ -299,14 +299,8 @@ github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UV
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
 github.com/stretchr/testify v1.5.1 h1:nOGnQDM7FYENwehXlg/kFVnos3rEvtKTjRvOWSzb6H4=
 github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5cxcmMvtA=
-github.com/tapjoy/go-tracing v0.5.0 h1:BI3CQq0+ZvfQDi0/I+VIBFFLX7EB4zAfm2BWoqt5C8s=
-github.com/tapjoy/go-tracing v0.5.0/go.mod h1:MLlO2TvkIVkOznClki8Y2a6+5l6WlP4IlvIT0RYomJs=
-github.com/tapjoy/go-tracing v0.5.1 h1:5LkfOT/OohH+/zGj4usGOJtUCtIy3pAYYgYJYMHvZG0=
-github.com/tapjoy/go-tracing v0.5.1/go.mod h1:MLlO2TvkIVkOznClki8Y2a6+5l6WlP4IlvIT0RYomJs=
-github.com/tapjoy/go-tracing v0.5.2 h1:ywS686JrbLCDrja2UQHMwJWfxeFMKfBgWOIEhqYFPoU=
-github.com/tapjoy/go-tracing v0.5.2/go.mod h1:MLlO2TvkIVkOznClki8Y2a6+5l6WlP4IlvIT0RYomJs=
-github.com/tapjoy/go-tracing v0.5.3 h1:uckfzzJ3er5nsCRWtwqiDf0sx8phEEddoVQ7YBXpx3s=
-github.com/tapjoy/go-tracing v0.5.3/go.mod h1:MLlO2TvkIVkOznClki8Y2a6+5l6WlP4IlvIT0RYomJs=
+github.com/tapjoy/go-tracing v0.6.0 h1:aZTZ1rBPhF+MYnuHiCxOvEMXCkDTyKjVgBz+30NajeM=
+github.com/tapjoy/go-tracing v0.6.0/go.mod h1:MLlO2TvkIVkOznClki8Y2a6+5l6WlP4IlvIT0RYomJs=
 github.com/timakin/bodyclose v0.0.0-20190930140734-f7f2e9bca95e/go.mod h1:Qimiffbc6q9tBWlVV6x0P9sat/ao1xEkREYPPj9hphk=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
 github.com/ugorji/go v1.1.4/go.mod h1:uQMGLiO92mf5W77hV/PUCpI3pbzQx3CRekS0kk+RGrc=

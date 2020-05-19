@@ -150,7 +150,7 @@ github.com/stretchr/objx
 # github.com/stretchr/testify v1.5.1
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/mock
-# github.com/tapjoy/go-tracing v0.5.3
+# github.com/tapjoy/go-tracing v0.6.0
 github.com/tapjoy/go-tracing/tracing
 github.com/tapjoy/go-tracing/tracing/http
 github.com/tapjoy/go-tracing/tracing/httprouter

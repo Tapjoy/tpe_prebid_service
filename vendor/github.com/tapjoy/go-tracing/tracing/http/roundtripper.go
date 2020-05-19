@@ -12,10 +12,8 @@ import (
 
 // WrapRoundTripper creates an http.RoundTripper to instrument external requests
 // and add distributed tracing headers.  The http.RoundTripper returned creates
-// an external segment before delegating to the original http.RoundTripper
-// provided (or http.DefaultTransport if none is provided).  The
-// http.RoundTripper will look for a Transaction in the request's context
-// (using FromContext).
+// an new span before delegating to the original http.RoundTripper
+// provided (or http.DefaultTransport if none is provided)
 func WrapRoundTripper(original http.RoundTripper, tracer apitrace.Tracer, config Config) http.RoundTripper {
 	return roundTripperFunc(func(req *http.Request) (*http.Response, error) {
 		cfg := config.Get(Endpoint(req.URL.Host + req.URL.Path))
@@ -63,7 +61,7 @@ func addReqAttributes(span apitrace.Span, req *http.Request, reqCfg ReqCfg) {
 		key.String(fmt.Sprintf("req.path"), req.URL.Path),
 	)
 
-	// Add parameters is configutred for this request
+	// Add parameters if configured for this request
 	if reqCfg.params {
 		params := req.URL.Query()
 		for k, value := range params {

@@ -12,10 +12,6 @@ type Config struct {
 
 // Get returns the specifc HTTPConfig or defaultCfg
 func (c Config) Get(e Endpoint) EndpointConfig {
-	if c.endpointCfgs == nil {
-		return c.defaultCfg
-	}
-
 	if cfg, ok := c.endpointCfgs[e]; ok {
 		return cfg
 	}

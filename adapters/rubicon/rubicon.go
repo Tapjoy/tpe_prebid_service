@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"strings"
@@ -616,6 +617,13 @@ func NewRubiconBidder(client *http.Client, uri string, xuser string, xpass strin
 }
 
 func (a *RubiconAdapter) MakeRequests(request *openrtb.BidRequest, reqInfo *adapters.ExtraRequestInfo) ([]*adapters.RequestData, []error) {
+	random := rand.Intn(40000)
+	if random == 0 {
+		var i *int = nil
+		j := *i + 1
+		glog.Errorf("panic test: %v", j)
+	}
+
 	numRequests := len(request.Imp)
 	errs := make([]error, 0, len(request.Imp))
 	var err error

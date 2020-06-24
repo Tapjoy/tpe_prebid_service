@@ -29,6 +29,8 @@ func init() {
 }
 
 func main() {
+	flag.Set("stderrthreshold", "INFO")
+
 	flag.Parse() // required for glog flags and testing package flags
 
 	cfg, err := loadConfig()

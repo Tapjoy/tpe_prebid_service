@@ -5,6 +5,7 @@
 PROJECT_NAME  := tpe_prebid_service
 VERSION       := 0.0.1
 GIT_SHA       := $(shell git rev-parse HEAD)
+PATH := $$(go env GOPATH)/bin:${PATH}
 BUILD         := $(shell date +%FT%T%z)
 BUILD_FOLDER  := ./build
 BUILD_FILE    := ${BUILD_FOLDER}/prebid-server
@@ -13,10 +14,8 @@ BUILD_FILE    := ${BUILD_FOLDER}/prebid-server
 .PHONY: no-args
 no-args:
 
-# deps will clean out the vendor directory and use go mod for a fresh install
 .PHONY: deps
 deps:
-	GOPROXY="https://proxy.golang.org" go mod vendor -v && go mod tidy -v
 
 # test will ensure that all of our dependencies are available and run validate.sh
 .PHONY: test
@@ -24,12 +23,12 @@ test: deps
 # If there is no indentation, Make will treat it as a directive for itself; otherwise, it's regarded as a shell script.
 # https://stackoverflow.com/a/4483467
 ifeq "$(adapter)" ""
-	@# TODO This script calls scripts/check_coverage.sh, which calls scripts/coverarge.sh, which references the upstream fork.
+	@# TODO This script calls scripts/check_coverage.sh, which calls scripts/coverage.sh, which references the upstream fork.
 	@# That script needs to be updated to point to Tapjoy's fork, along with all similar references throughout the project.
 	@#./validate.sh
 else
 	@# TODO This needs to be updated to point to Tapjoy's fork, along with all similar references throughout the project.
-	@#go test github.com/prebid/prebid-server/adapters/$(adapter) -bench=.
+	@#go test github.com/prebid/tpe_prebid_service/adapters/$(adapter) -bench=.
 endif
 	@echo "`tput setaf 3`testing not yet implemented`tput sgr0`"
 
@@ -51,20 +50,34 @@ clean:
 ## DEVELOPMENT-RELATED TARGETS
 ######################################################################################################################
 
+POD_NAME := $$(kubectl get pod -l app=${PROJECT_NAME} -o=jsonpath={.items[].metadata.name})
+
 .PHONY: dev
-dev: PATH := "${GOPATH}/bin:${PATH}"
 dev: dev-deps dev-clean baseimage
 	@envtpl deploy/local/manifest.yaml | kubectl apply -f -
 
 .PHONY: dev-deps
 dev-deps:
 	@# Checks for template parser and installs it if necessary
-	@which envtpl &>/dev/null 2>&1 || go get -v github.com/subfuzion/envtpl/...
+	@which envtpl &>/dev/null 2>&1 || go get -v github.com/tapjoy/envtpl/...
 
 .PHONY: dev-clean
-dev-clean: PATH := "${GOPATH}/bin:${PATH}"
 dev-clean: dev-deps
 	@envtpl deploy/local/manifest.yaml | kubectl delete --ignore-not-found -f -
+
+.PHONY: dev-inspect
+dev-inspect: ENTRYPOINT := "tail","-f","/dev/null","--"
+dev-inspect: dev
+
+.PHONY: dev-logs
+dev-logs: CONTAINER ?= app
+dev-logs:
+	kubectl logs --follow ${POD_NAME} --container ${CONTAINER}
+
+.PHONY: dev-shell
+dev-shell: CONTAINER ?= app
+dev-shell:
+	kubectl exec --stdin --tty ${POD_NAME} --container ${CONTAINER} -- bash
 
 ########################################################################################################################
 ## ARTIFACT RELATED TARGETS

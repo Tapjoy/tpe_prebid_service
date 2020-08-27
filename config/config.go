@@ -79,7 +79,8 @@ type Configuration struct {
 
 // Monitoring ...
 type Monitoring struct {
-	NewRelic NewRelic `mapstructure:"newrelic"`
+	NewRelic  NewRelic  `mapstructure:"newrelic"`
+	HoneyComb HoneyComb `mapstructure:"honeycomb"`
 }
 
 // NewRelic ...
@@ -87,6 +88,15 @@ type NewRelic struct {
 	AppName    string `mapstructure:"app_name"`
 	LicenseKey string `mapstructure:"license_key"`
 	LogLevel   string `mapstructure:"log_level"`
+}
+
+// HoneyComb ...
+type HoneyComb struct {
+	ServiceName          string  `mapstructure:"service_name"`
+	WaterfallDatasetName string  `mapstructure:"waterfall_dataset_name"`
+	WriteKey             string  `mapstructure:"write_key"`
+	SampleRate           float64 `mapstructure:"sample_rate"`
+	Debug                bool    `mapstructure:"debug"`
 }
 
 const MIN_COOKIE_SIZE_BYTES = 500
@@ -640,6 +650,11 @@ func SetupViper(v *viper.Viper, filename string) {
 	v.SetDefault("metrics.prometheus.timeout_ms", 10000)
 	v.SetDefault("monitoring.newrelic.app_name", "tpe_prebid_service-dev")
 	v.SetDefault("monitoring.newrelic.license_key", "ThisValueIs40CharacterNewRelicLicenseKey")
+	v.SetDefault("monitoring.honeycomb.service_name", "tpe_prebid_service_dev")
+	v.SetDefault("monitoring.honeycomb.write_key", "thisisfakebro")
+	v.SetDefault("monitoring.honeycomb.waterfall_dataset_name", "waterfall_dev")
+	v.SetDefault("monitoring.honeycomb.sample_rate", 0.0)
+	v.SetDefault("monitoring.honeycomb.debug", false)
 	v.SetDefault("monitoring.newrelic.log_level", "info") // values: https://github.com/sirupsen/logrus/blob/39a5ad12948d094ddd5d5a6a4a4281f453d77562/logrus.go#L25
 	v.SetDefault("datacache.type", "dummy")
 	v.SetDefault("datacache.filename", "")

@@ -38,6 +38,7 @@ import (
 	"github.com/prebid/prebid-server/exchange"
 	"github.com/prebid/prebid-server/gdpr"
 	"github.com/prebid/prebid-server/monitoring/newrelic"
+	"github.com/prebid/prebid-server/monitoring/tracing"
 	"github.com/prebid/prebid-server/openrtb_ext"
 	"github.com/prebid/prebid-server/pbs"
 	metricsConf "github.com/prebid/prebid-server/pbsmetrics/config"
@@ -46,12 +47,31 @@ import (
 	"github.com/prebid/prebid-server/ssl"
 	storedRequestsConf "github.com/prebid/prebid-server/stored_requests/config"
 	"github.com/prebid/prebid-server/usersync/usersyncers"
+	traceHTTP "github.com/tapjoy/go-tracing/tracing/http"
+	traceRouter "github.com/tapjoy/go-tracing/tracing/httprouter"
 
 	"github.com/golang/glog"
 	"github.com/julienschmidt/httprouter"
 	_ "github.com/lib/pq"
 	"github.com/rs/cors"
 )
+
+type router interface {
+	DELETE(path string, h httprouter.Handle)
+	GET(path string, h httprouter.Handle)
+	HEAD(path string, h httprouter.Handle)
+	OPTIONS(path string, h httprouter.Handle)
+	PATCH(path string, h httprouter.Handle)
+	POST(path string, h httprouter.Handle)
+	PUT(path string, h httprouter.Handle)
+
+	Handle(method, path string, h httprouter.Handle)
+	Handler(method, path string, handler http.Handler)
+	HandlerFunc(method, path string, handler http.HandlerFunc)
+	ServeHTTP(w http.ResponseWriter, req *http.Request)
+
+	ServeFiles(path string, root http.FileSystem)
+}
 
 var dataCache cache.Cache
 var exchanges map[string]adapters.Adapter
@@ -179,7 +199,7 @@ func newExchangeMap(cfg *config.Configuration) map[string]adapters.Adapter {
 }
 
 type Router struct {
-	*nrhttprouter.Router
+	router
 	MetricsEngine   *metricsConf.DetailedMetricsEngine
 	ParamsValidator openrtb_ext.BidderParamValidator
 	Shutdown        func()
@@ -189,13 +209,25 @@ func New(cfg *config.Configuration, rateConvertor *currencies.RateConverter) (r 
 	const schemaDirectory = "./static/bidder-params"
 	const infoDirectory = "./static/bidder-info"
 
+	// setup tapjoy monitoring for incoming requests
 	nrApp, err := newrelic.Make(cfg.Monitoring.NewRelic)
 	if err != nil {
 		return nil, err
 	}
+	nrRouter := nrhttprouter.New(nrApp)
+
+	traceProvider, _, _ := tracing.NewTraceProvider(cfg.Monitoring.HoneyComb)
+	tpeTracer := traceProvider.Tracer("tpe")
+	pathBlacklist := map[string]bool{
+		"/healthz": true,
+	}
+	tracerRouter, err := traceRouter.WrapRouter("tpe/router", tpeTracer, nrRouter, pathBlacklist)
+	if err != nil {
+		return nil, fmt.Errorf("error creating tracing response handler: %s", err)
+	}
 
 	r = &Router{
-		Router: nrhttprouter.New(nrApp),
+		router: tracerRouter,
 	}
 
 	// For bid processing, we need both the hardcoded certificates and the certificates found in container's
@@ -216,7 +248,20 @@ func New(cfg *config.Configuration, rateConvertor *currencies.RateConverter) (r 
 		},
 	}
 
-	generalHttpClient.Transport = nr.NewRoundTripper(generalHttpClient.Transport)
+	// setup tapjoy monitoring for out going requests
+	defaultCfg := traceHTTP.NewEndpointCfg(false, nil, nil)
+	httpCfg := traceHTTP.NewEndpointCfg(false, &traceHTTP.RawUnmarshaler{}, &traceHTTP.RawUnmarshaler{})
+
+	endpointMap := map[traceHTTP.Endpoint]traceHTTP.EndpointConfig{
+		traceHTTP.Endpoint(cfg.Adapters[string(openrtb_ext.BidderRubicon)].XAPI.EndpointUSEast): httpCfg,
+		traceHTTP.Endpoint(cfg.Adapters[string(openrtb_ext.BidderRubicon)].XAPI.EndpointUSWest): httpCfg,
+		traceHTTP.Endpoint(cfg.Adapters[string(openrtb_ext.BidderRubicon)].XAPI.EndpointAPAC):   httpCfg,
+		traceHTTP.Endpoint(cfg.Adapters[string(openrtb_ext.BidderRubicon)].XAPI.EndpointEU):     httpCfg,
+	}
+	rtCfg := traceHTTP.NewCfg(defaultCfg, endpointMap)
+	hcRoundTripper := traceHTTP.WrapRoundTripper(generalHttpClient.Transport, tpeTracer, rtCfg)
+
+	generalHttpClient.Transport = nr.NewRoundTripper(hcRoundTripper)
 
 	cacheHttpClient := &http.Client{
 		Transport: &http.Transport{
@@ -232,7 +277,7 @@ func New(cfg *config.Configuration, rateConvertor *currencies.RateConverter) (r 
 
 	// Metrics engine
 	r.MetricsEngine = metricsConf.NewMetricsEngine(cfg, legacyBidderList)
-	db, shutdown, fetcher, ampFetcher, categoriesFetcher, videoFetcher := storedRequestsConf.NewStoredRequests(cfg, r.MetricsEngine, generalHttpClient, r.Router)
+	db, shutdown, fetcher, ampFetcher, categoriesFetcher, videoFetcher := storedRequestsConf.NewStoredRequests(cfg, r.MetricsEngine, generalHttpClient, r.router)
 
 	// todo(zachbadgett): better shutdown
 	r.Shutdown = shutdown

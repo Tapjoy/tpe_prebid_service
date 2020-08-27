@@ -103,6 +103,15 @@ data:
   #PBS_ADAPTERS_LIFTOFF_XAPI_ENDPOINT_US_EAST: "http://localhost:4646/givemeads"
   #PBS_ADAPTERS_LIFTOFF_XAPI_ENDPOINT_EU: "http://localhost:4646/givemeads"
   #PBS_ADAPTERS_LIFTOFF_XAPI_ENDPOINT_APAC: "http://localhost:4646/givemeads"
+
+  PBS_DEPLOY_PID_ENABLED: "false"
+
+  # honeycomb tracing
+  PBS_MONITORING_HONEYCOMB_SERVICE_NAME: "tpe_prebid_service_dev"
+  PBS_MONITORING_HONEYCOMB_WATERFALL_DATASET_NAME: {{ default "waterfall_dev" (env "PBS_MONITORING_HONEYCOMB_WATERFALL_DATASET_NAME") | quote }}
+  PBS_MONITORING_HONEYCOMB_SAMPLE_RATE: {{ default "0.0" (env "PBS_MONITORING_HONEYCOMB_SAMPLE_RATE") | quote }}
+  PBS_MONITORING_HONEYCOMB_WRITE_KEY: {{ default "8284016251f3623bea90fb5fec4d319b" (env "PBS_MONITORING_HONEYCOMB_WRITE_KEY") | quote }}
+  PBS_MONITORING_HONEYCOMB_DEBUG: "true"
 ---
 ########################################################################################################################
 ## WORKLOAD-RELATED MANIFESTS

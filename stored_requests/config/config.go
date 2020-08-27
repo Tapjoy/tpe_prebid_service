@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/newrelic/go-agent/v3/integrations/nrhttprouter"
+	"github.com/julienschmidt/httprouter"
 	"github.com/prebid/prebid-server/pbsmetrics"
 
 	"github.com/golang/glog"
@@ -23,6 +23,23 @@ import (
 	httpEvents "github.com/prebid/prebid-server/stored_requests/events/http"
 	postgresEvents "github.com/prebid/prebid-server/stored_requests/events/postgres"
 )
+
+type router interface {
+	DELETE(path string, h httprouter.Handle)
+	GET(path string, h httprouter.Handle)
+	HEAD(path string, h httprouter.Handle)
+	OPTIONS(path string, h httprouter.Handle)
+	PATCH(path string, h httprouter.Handle)
+	POST(path string, h httprouter.Handle)
+	PUT(path string, h httprouter.Handle)
+
+	Handle(method, path string, h httprouter.Handle)
+	Handler(method, path string, handler http.Handler)
+	HandlerFunc(method, path string, handler http.HandlerFunc)
+	ServeHTTP(w http.ResponseWriter, req *http.Request)
+
+	ServeFiles(path string, root http.FileSystem)
+}
 
 // This gets set to the connection string used when a database connection is made. We only support a single
 // database currently, so all fetchers need to share the same db connection for now.
@@ -41,7 +58,7 @@ type dbConnection struct {
 //
 // As a side-effect, it will add some endpoints to the router if the config calls for it.
 // In the future we should look for ways to simplify this so that it's not doing two things.
-func CreateStoredRequests(cfg *config.StoredRequestsSlim, metricsEngine pbsmetrics.MetricsEngine, client *http.Client, router *nrhttprouter.Router, dbc *dbConnection) (fetcher stored_requests.AllFetcher, shutdown func()) {
+func CreateStoredRequests(cfg *config.StoredRequestsSlim, metricsEngine pbsmetrics.MetricsEngine, client *http.Client, router router, dbc *dbConnection) (fetcher stored_requests.AllFetcher, shutdown func()) {
 	// Create database connection if given options for one
 	if cfg.Postgres.ConnectionInfo.Database != "" {
 		conn := cfg.Postgres.ConnectionInfo.ConnString()
@@ -105,7 +122,7 @@ func CreateStoredRequests(cfg *config.StoredRequestsSlim, metricsEngine pbsmetri
 //
 // As a side-effect, it will add some endpoints to the router if the config calls for it.
 // In the future we should look for ways to simplify this so that it's not doing two things.
-func NewStoredRequests(cfg *config.Configuration, metricsEngine pbsmetrics.MetricsEngine, client *http.Client, router *nrhttprouter.Router) (db *sql.DB, shutdown func(), fetcher stored_requests.Fetcher, ampFetcher stored_requests.Fetcher, categoriesFetcher stored_requests.CategoryFetcher, videoFetcher stored_requests.Fetcher) {
+func NewStoredRequests(cfg *config.Configuration, metricsEngine pbsmetrics.MetricsEngine, client *http.Client, router router) (db *sql.DB, shutdown func(), fetcher stored_requests.Fetcher, ampFetcher stored_requests.Fetcher, categoriesFetcher stored_requests.CategoryFetcher, videoFetcher stored_requests.Fetcher) {
 	// Build individual slim options from combined config struct
 	slimAuction, slimAmp := resolvedStoredRequestsConfig(cfg)
 
@@ -225,7 +242,7 @@ func newCache(cfg *config.StoredRequestsSlim) stored_requests.Cache {
 	return memory.NewCache(&cfg.InMemoryCache)
 }
 
-func newEventProducers(cfg *config.StoredRequestsSlim, client *http.Client, db *sql.DB, router *nrhttprouter.Router) (eventProducers []events.EventProducer) {
+func newEventProducers(cfg *config.StoredRequestsSlim, client *http.Client, db *sql.DB, router router) (eventProducers []events.EventProducer) {
 	if cfg.CacheEvents.Enabled {
 		eventProducers = append(eventProducers, newEventsAPI(router, cfg.CacheEvents.Endpoint))
 	}
@@ -255,7 +272,7 @@ func newPostgresPolling(cfg config.PostgresUpdatePollingSlim, db *sql.DB, startT
 	return postgresEvents.PollForUpdates(ctxProducer, db, cfg.Query, startTime, time.Duration(cfg.RefreshRate)*time.Second)
 }
 
-func newEventsAPI(router *nrhttprouter.Router, endpoint string) events.EventProducer {
+func newEventsAPI(router router, endpoint string) events.EventProducer {
 	producer, handler := apiEvents.NewEventsAPI()
 	router.POST(endpoint, handler)
 	router.DELETE(endpoint, handler)

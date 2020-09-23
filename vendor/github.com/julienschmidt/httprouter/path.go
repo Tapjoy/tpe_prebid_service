@@ -41,7 +41,15 @@ func CleanPath(p string) string {
 		buf[0] = '/'
 	}
 
+<<<<<<< HEAD
+<<<<<<< HEAD
 	trailing := n > 1 && p[n-1] == '/'
+=======
+	trailing := n > 2 && p[n-1] == '/'
+>>>>>>> OPER-5108 Setup Local development with k8s
+=======
+	trailing := n > 1 && p[n-1] == '/'
+>>>>>>> [PROG-1244] Newrelic Integration (simple)
 
 	// A bit more clunky without a 'lazybuf' like the path package, but the loop
 	// gets completely inlined (bufApp). So in contrast to the path package this
@@ -59,11 +67,27 @@ func CleanPath(p string) string {
 
 		case p[r] == '.' && p[r+1] == '/':
 			// . element
+<<<<<<< HEAD
+<<<<<<< HEAD
 			r += 2
 
 		case p[r] == '.' && p[r+1] == '.' && (r+2 == n || p[r+2] == '/'):
 			// .. element: remove to last /
 			r += 3
+=======
+			r++
+
+		case p[r] == '.' && p[r+1] == '.' && (r+2 == n || p[r+2] == '/'):
+			// .. element: remove to last /
+			r += 2
+>>>>>>> OPER-5108 Setup Local development with k8s
+=======
+			r += 2
+
+		case p[r] == '.' && p[r+1] == '.' && (r+2 == n || p[r+2] == '/'):
+			// .. element: remove to last /
+			r += 3
+>>>>>>> [PROG-1244] Newrelic Integration (simple)
 
 			if w > 1 {
 				// can backtrack

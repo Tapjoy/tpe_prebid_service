@@ -12,13 +12,10 @@ import (
 	"strings"
 	"time"
 
-<<<<<<< HEAD
 	"github.com/newrelic/go-agent/v3/integrations/nrhttprouter"
 	nr "github.com/newrelic/go-agent/v3/newrelic"
-=======
 	"github.com/prebid/prebid-server/pbsmetrics"
 
->>>>>>> Fix debug log error messages (#1270)
 	"github.com/prebid/prebid-server/adapters"
 	"github.com/prebid/prebid-server/adapters/adform"
 	"github.com/prebid/prebid-server/adapters/appnexus"

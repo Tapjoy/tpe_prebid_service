@@ -159,36 +159,6 @@ func (e *exchange) HoldAuction(ctx context.Context, bidRequest *openrtb.BidReque
 	// List of bidders we have requests for.
 	liveAdapters := listBiddersWithRequests(cleanRequests)
 
-	// Process the request to check for targeting parameters.
-	var targData *targetData
-	shouldCacheBids := false
-	shouldCacheVAST := false
-	var bidAdjustmentFactors map[string]float64
-	var requestExt openrtb_ext.ExtRequest
-	if len(bidRequest.Ext) > 0 {
-		err := json.Unmarshal(bidRequest.Ext, &requestExt)
-		if err != nil {
-			nr.NoticeError(ctx, fmt.Errorf("Error decoding Request.ext : %s", err.Error()))
-			return nil, fmt.Errorf("Error decoding Request.ext : %s", err.Error())
-		}
-		bidAdjustmentFactors = requestExt.Prebid.BidAdjustmentFactors
-		if requestExt.Prebid.Cache != nil {
-			shouldCacheBids = requestExt.Prebid.Cache.Bids != nil
-			shouldCacheVAST = requestExt.Prebid.Cache.VastXML != nil
-		}
-
-		if requestExt.Prebid.Targeting != nil {
-			targData = &targetData{
-				priceGranularity:  requestExt.Prebid.Targeting.PriceGranularity,
-				includeWinners:    requestExt.Prebid.Targeting.IncludeWinners,
-				includeBidderKeys: requestExt.Prebid.Targeting.IncludeBidderKeys,
-				includeCacheBids:  shouldCacheBids,
-				includeCacheVast:  shouldCacheVAST,
-			}
-			targData.cacheHost, targData.cachePath = e.cache.GetExtCacheData()
-		}
-	}
-
 	// If we need to cache bids, then it will take some time to call prebid cache.
 	// We should reduce the amount of time the bidders have, to compensate.
 	auctionCtx, cancel := e.makeAuctionContext(ctx, cacheInstructions.cacheBids)

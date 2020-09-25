@@ -41,15 +41,7 @@ type dbConnection struct {
 //
 // As a side-effect, it will add some endpoints to the router if the config calls for it.
 // In the future we should look for ways to simplify this so that it's not doing two things.
-<<<<<<< HEAD
-<<<<<<< HEAD
 func CreateStoredRequests(cfg *config.StoredRequests, metricsEngine pbsmetrics.MetricsEngine, client *http.Client, router *nrhttprouter.Router, dbc *dbConnection) (fetcher stored_requests.AllFetcher, shutdown func()) {
-=======
-func CreateStoredRequests(cfg *config.StoredRequestsSlim, metricsEngine pbsmetrics.MetricsEngine, client *http.Client, router *nrhttprouter.Router, dbc *dbConnection) (fetcher stored_requests.AllFetcher, shutdown func()) {
->>>>>>> [PROG-1244] Newrelic Integration (simple)
-=======
-func CreateStoredRequests(cfg *config.StoredRequests, metricsEngine pbsmetrics.MetricsEngine, client *http.Client, router *nrhttprouter.Router, dbc *dbConnection) (fetcher stored_requests.AllFetcher, shutdown func()) {
->>>>>>> Sync
 	// Create database connection if given options for one
 	if cfg.Postgres.ConnectionInfo.Database != "" {
 		conn := cfg.Postgres.ConnectionInfo.ConnString()

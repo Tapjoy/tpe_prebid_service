@@ -426,8 +426,6 @@ func (e *exchange) recoverSafely(cleanRequests map[openrtb_ext.BidderName]*openr
 	return func(ctx context.Context, txn *newrelic.Transaction, aName openrtb_ext.BidderName, coreBidder openrtb_ext.BidderName, request *openrtb.BidRequest, bidlabels *pbsmetrics.AdapterLabels, conversions currencies.Conversions) {
 		defer func() {
 			if r := recover(); r != nil {
-				nr.NoticeError(ctx, fmt.Errorf("OpenRTB auction recovered panic from Bidder %s: %v. Stack trace is: %v", coreBidder, r, string(debug.Stack())))
-
 				allBidders := ""
 				sb := strings.Builder{}
 				for k := range cleanRequests {

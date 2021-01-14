@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptrace"
+	"net/http/httputil"
 	"time"
 
 	"github.com/golang/glog"
@@ -347,6 +348,16 @@ func (bidder *bidderAdapter) doRequestImpl(ctx context.Context, req *adapters.Re
 	txn := newrelic.FromContext(ctx)
 	// put newrelic transaction into http request
 	httpReq = newrelic.RequestWithTransactionContext(httpReq, txn)
+
+	// Save a copy of this request for debugging.
+	if req.Uri == "https://tapjoy-rtb.liftoff.io/tapjoy/bid" {
+		fmt.Println("liftoff request")
+		requestDump, err := httputil.DumpRequest(httpReq, true)
+		if err != nil {
+			fmt.Println(err)
+		}
+		fmt.Println(string(requestDump))
+	}
 
 	httpResp, err := ctxhttp.Do(ctx, bidder.Client, httpReq)
 	if err != nil {

@@ -350,8 +350,8 @@ func (bidder *bidderAdapter) doRequestImpl(ctx context.Context, req *adapters.Re
 	httpReq = newrelic.RequestWithTransactionContext(httpReq, txn)
 
 	// Save a copy of this request for debugging.
-	if req.Uri == "https://tapjoy-rtb.liftoff.io/tapjoy/bid" {
-		fmt.Println("liftoff request")
+	if req.Uri == "https://tapjoy-east.crossinstallbidder00.com/bid_request/tapjoy" {
+		fmt.Println("crossinstall request")
 		requestDump, err := httputil.DumpRequest(httpReq, true)
 		if err != nil {
 			fmt.Println(err)

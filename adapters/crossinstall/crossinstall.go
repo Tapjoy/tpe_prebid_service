@@ -21,6 +21,7 @@ const (
 	USWest Region = "us_west"
 )
 
+// SKAN IDs must be lower case
 var crossinstallSKADNetIDs = map[string]bool{
 	"prcb7njmu6.skadnetwork": true,
 }
@@ -28,6 +29,10 @@ var crossinstallSKADNetIDs = map[string]bool{
 type crossinstallImpExt struct {
 	Reward int               `json:"reward"`
 	SKADN  openrtb_ext.SKADN `json:"skadn"`
+}
+
+type crossinstallBannerExt struct {
+	PlacementType adapters.PlacementType `json:"placementtype"`
 }
 
 // CrossInstallAdapter ...
@@ -109,6 +114,30 @@ func (adapter *CrossInstallAdapter) MakeRequests(request *openrtb.BidRequest, _ 
 				Message: err.Error(),
 			})
 			continue
+		}
+
+		placementType := adapters.Interstitial
+		if crossinstallExt.Reward == 1 {
+			placementType = adapters.Rewarded
+		}
+
+		if thisImp.Banner != nil {
+			if crossinstallExt.MRAIDSupported {
+				bannerCopy := *thisImp.Banner
+
+				bannerExt := crossinstallBannerExt{
+					PlacementType: placementType,
+				}
+				bannerCopy.Ext, err = json.Marshal(&bannerExt)
+				if err != nil {
+					errs = append(errs, err)
+					continue
+				}
+
+				thisImp.Banner = &bannerCopy
+			} else {
+				thisImp.Banner = nil
+			}
 		}
 
 		skadn := openrtb_ext.SKADN{}

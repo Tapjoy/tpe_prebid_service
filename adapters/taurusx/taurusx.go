@@ -22,11 +22,16 @@ const (
 	SG     Region = "sg"
 )
 
+// SKAN IDs must be lower case
 var taurusxExtSKADNetIDs = map[string]bool{
 	"22mmun2rn5.skadnetwork": true,
 }
 
-type taurusxImpVideoExt struct {
+type taurusxVideoExt struct {
+	Rewarded int `json:"rewarded"`
+}
+
+type taurusxBannerExt struct {
 	Rewarded int `json:"rewarded"`
 }
 
@@ -116,7 +121,7 @@ func (adapter *TaurusXAdapter) MakeRequests(request *openrtb.BidRequest, _ *adap
 			continue
 		}
 
-		impVideoExt := taurusxImpVideoExt{
+		impVideoExt := taurusxVideoExt{
 			Rewarded: taurusxExt.Reward,
 		}
 
@@ -124,6 +129,25 @@ func (adapter *TaurusXAdapter) MakeRequests(request *openrtb.BidRequest, _ *adap
 		if err != nil {
 			errs = append(errs, err)
 			continue
+		}
+
+		if thisImp.Banner != nil {
+			if taurusxExt.MRAIDSupported {
+				bannerCopy := *thisImp.Banner
+
+				bannerExt := taurusxBannerExt{
+					Rewarded: taurusxExt.Reward,
+				}
+				bannerCopy.Ext, err = json.Marshal(&bannerExt)
+				if err != nil {
+					errs = append(errs, err)
+					continue
+				}
+
+				thisImp.Banner = &bannerCopy
+			} else {
+				thisImp.Banner = nil
+			}
 		}
 
 		skadn := openrtb_ext.SKADN{}

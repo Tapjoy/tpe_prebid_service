@@ -2,12 +2,21 @@ package adapters
 
 import (
 	"encoding/json"
+	"strings"
 
 	"github.com/prebid/prebid-server/errortypes"
 	"github.com/prebid/prebid-server/openrtb_ext"
 	"github.com/prebid/prebid-server/pbs"
 
 	"github.com/mxmCherry/openrtb"
+)
+
+// PlacementType ...
+type PlacementType string
+
+const (
+	Interstitial PlacementType = "interstitial"
+	Rewarded     PlacementType = "rewarded"
 )
 
 func min(x, y int) int {
@@ -193,7 +202,7 @@ func FilterPrebidSKADNExt(prebidExt *openrtb_ext.ExtImpPrebid, filterMap map[str
 // returns a subset elements of arr whose keys were in filterMap
 func filterArrayWithMap(arr []string, filterMap map[string]bool) (ret []string) {
 	for _, id := range arr {
-		if _, ok := filterMap[id]; ok {
+		if _, ok := filterMap[strings.ToLower(id)]; ok {
 			ret = append(ret, id)
 		}
 	}

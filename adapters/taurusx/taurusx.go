@@ -22,16 +22,21 @@ const (
 	SG     Region = "sg"
 )
 
+// SKAN IDs must be lower case
 var taurusxExtSKADNetIDs = map[string]bool{
 	"22mmun2rn5.skadnetwork": true,
 }
 
-type taurusxImpVideoExt struct {
+type taurusxVideoExt struct {
+	Rewarded int `json:"rewarded"`
+}
+
+type taurusxBannerExt struct {
 	Rewarded int `json:"rewarded"`
 }
 
 type taurusxImpExt struct {
-	SKADN openrtb_ext.SKADN `json:"skadn"`
+	SKADN openrtb_ext.SKADN `json:"skadn,omitempty"`
 }
 
 // TaurusXAdapter ...
@@ -116,7 +121,7 @@ func (adapter *TaurusXAdapter) MakeRequests(request *openrtb.BidRequest, _ *adap
 			continue
 		}
 
-		impVideoExt := taurusxImpVideoExt{
+		impVideoExt := taurusxVideoExt{
 			Rewarded: taurusxExt.Reward,
 		}
 
@@ -126,14 +131,32 @@ func (adapter *TaurusXAdapter) MakeRequests(request *openrtb.BidRequest, _ *adap
 			continue
 		}
 
-		skadn := openrtb_ext.SKADN{}
-		if taurusxExt.SKADNSupported {
-			skadn = adapters.FilterPrebidSKADNExt(bidderExt.Prebid, taurusxExtSKADNetIDs)
+		if thisImp.Banner != nil {
+			if taurusxExt.MRAIDSupported {
+				bannerCopy := *thisImp.Banner
+
+				bannerExt := taurusxBannerExt{
+					Rewarded: taurusxExt.Reward,
+				}
+				bannerCopy.Ext, err = json.Marshal(&bannerExt)
+				if err != nil {
+					errs = append(errs, err)
+					continue
+				}
+
+				thisImp.Banner = &bannerCopy
+			} else {
+				thisImp.Banner = nil
+			}
 		}
 
-		// Add impression extensions
-		impExt := taurusxImpExt{
-			SKADN: skadn,
+		impExt := taurusxImpExt{}
+		if taurusxExt.SKADNSupported {
+			skadn := adapters.FilterPrebidSKADNExt(bidderExt.Prebid, taurusxExtSKADNetIDs)
+			// only add if present
+			if len(skadn.SKADNetIDs) > 0 {
+				impExt.SKADN = skadn
+			}
 		}
 
 		thisImp.Ext, err = json.Marshal(&impExt)

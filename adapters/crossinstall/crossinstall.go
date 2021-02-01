@@ -21,13 +21,18 @@ const (
 	USWest Region = "us_west"
 )
 
+// SKAN IDs must be lower case
 var crossinstallSKADNetIDs = map[string]bool{
 	"prcb7njmu6.skadnetwork": true,
 }
 
 type crossinstallImpExt struct {
 	Reward int               `json:"reward"`
-	SKADN  openrtb_ext.SKADN `json:"skadn"`
+	SKADN  openrtb_ext.SKADN `json:"skadn,omitempty"`
+}
+
+type crossinstallBannerExt struct {
+	PlacementType adapters.PlacementType `json:"placementtype"`
 }
 
 // CrossInstallAdapter ...
@@ -111,14 +116,40 @@ func (adapter *CrossInstallAdapter) MakeRequests(request *openrtb.BidRequest, _ 
 			continue
 		}
 
-		skadn := openrtb_ext.SKADN{}
-		if crossinstallExt.SKADNSupported {
-			skadn = adapters.FilterPrebidSKADNExt(bidderExt.Prebid, crossinstallSKADNetIDs)
+		placementType := adapters.Interstitial
+		if crossinstallExt.Reward == 1 {
+			placementType = adapters.Rewarded
+		}
+
+		if thisImp.Banner != nil {
+			if crossinstallExt.MRAIDSupported {
+				bannerCopy := *thisImp.Banner
+
+				bannerExt := crossinstallBannerExt{
+					PlacementType: placementType,
+				}
+				bannerCopy.Ext, err = json.Marshal(&bannerExt)
+				if err != nil {
+					errs = append(errs, err)
+					continue
+				}
+
+				thisImp.Banner = &bannerCopy
+			} else {
+				thisImp.Banner = nil
+			}
 		}
 
 		impExt := crossinstallImpExt{
 			Reward: crossinstallExt.Reward,
-			SKADN:  skadn,
+		}
+
+		// Add SKADN if supported and present
+		if crossinstallExt.SKADNSupported {
+			skadn := adapters.FilterPrebidSKADNExt(bidderExt.Prebid, crossinstallSKADNetIDs)
+			if len(skadn.SKADNetIDs) > 0 {
+				impExt.SKADN = skadn
+			}
 		}
 
 		thisImp.Ext, err = json.Marshal(&impExt)

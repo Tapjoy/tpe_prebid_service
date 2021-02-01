@@ -33,6 +33,7 @@ const (
 	badvLimitSize = 50
 )
 
+// SKAN IDs must be lower case
 var rubiconSKADNetIDs = map[string]bool{
 	"abc": true,
 }
@@ -97,7 +98,7 @@ type rubiconImpExtRP struct {
 type rubiconImpExt struct {
 	RP                 rubiconImpExtRP   `json:"rp"`
 	ViewabilityVendors []string          `json:"viewabilityvendors"`
-	SKADN              openrtb_ext.SKADN `json:"skadn"`
+	SKADN              openrtb_ext.SKADN `json:"skadn,omitempty"`
 }
 
 type rubiconUserExtRP struct {
@@ -723,11 +724,6 @@ func (a *RubiconAdapter) MakeRequests(request *openrtb.BidRequest, reqInfo *adap
 			}
 		}
 
-		skadn := openrtb_ext.SKADN{}
-		if rubiconExt.SKADNSupported {
-			skadn = adapters.FilterPrebidSKADNExt(bidderExt.Prebid, rubiconSKADNetIDs)
-		}
-
 		impExt := rubiconImpExt{
 			RP: rubiconImpExtRP{
 				ZoneID: rubiconExt.ZoneId,
@@ -735,8 +731,16 @@ func (a *RubiconAdapter) MakeRequests(request *openrtb.BidRequest, reqInfo *adap
 				Track:  rubiconImpExtRPTrack{Mint: "", MintVersion: ""},
 			},
 			ViewabilityVendors: rubiconExt.ViewabilityVendors,
-			SKADN:              skadn,
 		}
+
+		if rubiconExt.SKADNSupported {
+			skadn := adapters.FilterPrebidSKADNExt(bidderExt.Prebid, rubiconSKADNetIDs)
+			// only add if present
+			if len(skadn.SKADNetIDs) > 0 {
+				impExt.SKADN = skadn
+			}
+		}
+
 		thisImp.Ext, err = json.Marshal(&impExt)
 		if err != nil {
 			errs = append(errs, err)
@@ -793,8 +797,7 @@ func (a *RubiconAdapter) MakeRequests(request *openrtb.BidRequest, reqInfo *adap
 			rubiconRequest.Device = &deviceCopy
 		}
 
-		isVideo := isVideo(thisImp)
-		if isVideo {
+		if thisImp.Video != nil {
 			if rubiconExt.Video.VideoSizeID == 0 {
 				errs = append(errs, &errortypes.BadInput{
 					Message: fmt.Sprintf("imp[%d].ext.bidder.rubicon.video.size_id must be defined for video impression", i),
@@ -829,22 +832,26 @@ func (a *RubiconAdapter) MakeRequests(request *openrtb.BidRequest, reqInfo *adap
 			}
 
 			thisImp.Video = &videoCopy
-			thisImp.Banner = nil
-		} else {
-			primarySizeID, altSizeIDs, err := parseRubiconSizes(thisImp.Banner.Format)
-			if err != nil {
-				errs = append(errs, err)
-				continue
+		}
+
+		if thisImp.Banner != nil {
+			if rubiconExt.MRAIDSupported {
+				primarySizeID, altSizeIDs, err := parseRubiconSizes(thisImp.Banner.Format)
+				if err != nil {
+					errs = append(errs, err)
+					continue
+				}
+				bannerExt := rubiconBannerExt{RP: rubiconBannerExtRP{SizeID: primarySizeID, AltSizeIDs: altSizeIDs, MIME: "text/html"}}
+				bannerCopy := *thisImp.Banner
+				bannerCopy.Ext, err = json.Marshal(&bannerExt)
+				if err != nil {
+					errs = append(errs, err)
+					continue
+				}
+				thisImp.Banner = &bannerCopy
+			} else {
+				thisImp.Banner = nil
 			}
-			bannerExt := rubiconBannerExt{RP: rubiconBannerExtRP{SizeID: primarySizeID, AltSizeIDs: altSizeIDs, MIME: "text/html"}}
-			bannerCopy := *thisImp.Banner
-			bannerCopy.Ext, err = json.Marshal(&bannerExt)
-			if err != nil {
-				errs = append(errs, err)
-				continue
-			}
-			thisImp.Banner = &bannerCopy
-			thisImp.Video = nil
 		}
 
 		siteExt := rubiconSiteExt{RP: rubiconSiteExtRP{SiteID: rubiconExt.SiteId}}

@@ -346,8 +346,8 @@ func (bidder *bidderAdapter) doRequestImpl(ctx context.Context, req *adapters.Re
 	}
 
 	// Save a copy of this request for debugging.
-	if req.Uri == "https://tapjoy-east.crossinstallbidder00.com/bid_request/tapjoy" {
-		fmt.Println("crossinstall request")
+	if req.Uri == "https://tapjoy-rtb.liftoff.io/tapjoy/bid" {
+		fmt.Println("liftoff us request")
 		requestDump, err := httputil.DumpRequest(httpReq, true)
 		if err != nil {
 			fmt.Println(err)

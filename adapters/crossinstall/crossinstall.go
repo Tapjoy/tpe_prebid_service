@@ -32,7 +32,8 @@ type crossinstallImpExt struct {
 }
 
 type crossinstallBannerExt struct {
-	PlacementType adapters.PlacementType `json:"placementtype"`
+	PlacementType          adapters.PlacementType `json:"placementtype"`
+	AllowCustomCloseButton bool                   `json:"allowscustomclosebutton"`
 }
 
 // CrossInstallAdapter ...
@@ -126,7 +127,8 @@ func (adapter *CrossInstallAdapter) MakeRequests(request *openrtb.BidRequest, _ 
 				bannerCopy := *thisImp.Banner
 
 				bannerExt := crossinstallBannerExt{
-					PlacementType: placementType,
+					PlacementType:          placementType,
+					AllowCustomCloseButton: false,
 				}
 				bannerCopy.Ext, err = json.Marshal(&bannerExt)
 				if err != nil {

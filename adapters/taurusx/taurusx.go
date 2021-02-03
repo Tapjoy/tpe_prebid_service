@@ -32,7 +32,8 @@ type taurusxVideoExt struct {
 }
 
 type taurusxBannerExt struct {
-	Rewarded int `json:"rewarded"`
+	Rewarded               int  `json:"rewarded"`
+	AllowCustomCloseButton bool `json:"allowscustomclosebutton"`
 }
 
 type taurusxImpExt struct {
@@ -136,7 +137,8 @@ func (adapter *TaurusXAdapter) MakeRequests(request *openrtb.BidRequest, _ *adap
 				bannerCopy := *thisImp.Banner
 
 				bannerExt := taurusxBannerExt{
-					Rewarded: taurusxExt.Reward,
+					Rewarded:               taurusxExt.Reward,
+					AllowCustomCloseButton: false,
 				}
 				bannerCopy.Ext, err = json.Marshal(&bannerExt)
 				if err != nil {

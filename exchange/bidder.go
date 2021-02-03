@@ -346,8 +346,8 @@ func (bidder *bidderAdapter) doRequestImpl(ctx context.Context, req *adapters.Re
 	}
 
 	// Save a copy of this request for debugging.
-	if req.Uri == "https://tapjoy-rtb.liftoff.io/tapjoy/bid" {
-		fmt.Println("liftoff us request")
+	if req.Uri == "https://ds-staging.uncn.jp/tj/0/bid.json" {
+		fmt.Println("unicorn request")
 		requestDump, err := httputil.DumpRequest(httpReq, true)
 		if err != nil {
 			fmt.Println(err)

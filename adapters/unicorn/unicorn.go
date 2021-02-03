@@ -1,4 +1,4 @@
-package crossinstall
+package unicorn
 
 import (
 	"context"
@@ -17,68 +17,66 @@ import (
 type Region string
 
 const (
-	USEast Region = "us_east"
-	USWest Region = "us_west"
+	JP Region = "jp"
 )
 
 // SKAN IDs must be lower case
-var crossinstallSKADNetIDs = map[string]bool{
-	"prcb7njmu6.skadnetwork": true,
+var unicornExtSKADNetIDs = map[string]bool{
+	"578prtvx9j.skadnetwork": true,
 }
 
-type crossinstallImpExt struct {
+type unicornImpExt struct {
 	Reward int                `json:"reward"`
 	SKADN  *openrtb_ext.SKADN `json:"skadn,omitempty"`
 }
 
-type crossinstallBannerExt struct {
-	PlacementType           adapters.PlacementType `json:"placementtype"`
-	AllowsCustomCloseButton bool                   `json:"allowscustomclosebutton"`
+type unicornBannerExt struct {
+	Reward                  int  `json:"reward"`
+	AllowsCustomCloseButton bool `json:"allowscustomclosebutton"`
 }
 
-// CrossInstallAdapter ...
-type CrossInstallAdapter struct {
+// UnicornAdapter ...
+type UnicornAdapter struct {
 	http             *adapters.HTTPAdapter
 	URI              string
 	SupportedRegions map[Region]string
 }
 
 // Name is used for cookies and such
-func (adapter *CrossInstallAdapter) Name() string {
-	return "crossinstall"
+func (adapter *UnicornAdapter) Name() string {
+	return "unicorn"
 }
 
 // SkipNoCookies ...
-func (adapter *CrossInstallAdapter) SkipNoCookies() bool {
+func (adapter *UnicornAdapter) SkipNoCookies() bool {
 	return false
 }
 
-// Call is legacy, and added only to support CrossInstallAdapter interface
-func (adapter *CrossInstallAdapter) Call(_ context.Context, _ *pbs.PBSRequest, _ *pbs.PBSBidder) (pbs.PBSBidSlice, error) {
+// Call is legacy, and added only to support UnicornAdapter interface
+func (adapter *UnicornAdapter) Call(_ context.Context, _ *pbs.PBSRequest, _ *pbs.PBSBidder) (pbs.PBSBidSlice, error) {
 	return pbs.PBSBidSlice{}, nil
 }
 
-// NewCrossInstallAdapter ...
-func NewCrossInstallAdapter(config *adapters.HTTPAdapterConfig, uri, useast, uswest string) *CrossInstallAdapter {
-	return NewCrossInstallBidder(adapters.NewHTTPAdapter(config).Client, uri, useast, uswest)
+// NewUnicornAdapter ...
+func NewUnicornAdapter(config *adapters.HTTPAdapterConfig, uri, jp string) *UnicornAdapter {
+	return NewUnicornBidder(adapters.NewHTTPAdapter(config).Client, uri, jp)
 }
 
-// NewCrossInstallBidder ...
-func NewCrossInstallBidder(client *http.Client, uri, useast, uswest string) *CrossInstallAdapter {
+// NewUnicornBidder ...
+func NewUnicornBidder(client *http.Client, uri, jp string) *UnicornAdapter {
 	adapter := &adapters.HTTPAdapter{Client: client}
 
-	return &CrossInstallAdapter{
+	return &UnicornAdapter{
 		http: adapter,
 		URI:  uri,
 		SupportedRegions: map[Region]string{
-			USEast: useast,
-			USWest: uswest,
+			JP: jp,
 		},
 	}
 }
 
 // MakeRequests ...
-func (adapter *CrossInstallAdapter) MakeRequests(request *openrtb.BidRequest, _ *adapters.ExtraRequestInfo) ([]*adapters.RequestData, []error) {
+func (adapter *UnicornAdapter) MakeRequests(request *openrtb.BidRequest, _ *adapters.ExtraRequestInfo) ([]*adapters.RequestData, []error) {
 	numRequests := len(request.Imp)
 
 	requestData := make([]*adapters.RequestData, 0, numRequests)
@@ -108,26 +106,21 @@ func (adapter *CrossInstallAdapter) MakeRequests(request *openrtb.BidRequest, _ 
 			continue
 		}
 
-		// unmarshal bidder extension to crossinstall extension
-		var crossinstallExt openrtb_ext.ExtImpCrossInstall
-		if err = json.Unmarshal(bidderExt.Bidder, &crossinstallExt); err != nil {
+		// unmarshal bidder extension to unicorn extension
+		var unicornExt openrtb_ext.ExtImpUnicorn
+		if err = json.Unmarshal(bidderExt.Bidder, &unicornExt); err != nil {
 			errs = append(errs, &errortypes.BadInput{
 				Message: err.Error(),
 			})
 			continue
 		}
 
-		placementType := adapters.Interstitial
-		if crossinstallExt.Reward == 1 {
-			placementType = adapters.Rewarded
-		}
-
 		if thisImp.Banner != nil {
-			if crossinstallExt.MRAIDSupported {
+			if unicornExt.MRAIDSupported {
 				bannerCopy := *thisImp.Banner
 
-				bannerExt := crossinstallBannerExt{
-					PlacementType:           placementType,
+				bannerExt := unicornBannerExt{
+					Reward:                  unicornExt.Reward,
 					AllowsCustomCloseButton: false,
 				}
 				bannerCopy.Ext, err = json.Marshal(&bannerExt)
@@ -142,13 +135,13 @@ func (adapter *CrossInstallAdapter) MakeRequests(request *openrtb.BidRequest, _ 
 			}
 		}
 
-		impExt := crossinstallImpExt{
-			Reward: crossinstallExt.Reward,
+		impExt := unicornImpExt{
+			Reward: unicornExt.Reward,
 		}
 
-		// Add SKADN if supported and present
-		if crossinstallExt.SKADNSupported {
-			skadn := adapters.FilterPrebidSKADNExt(bidderExt.Prebid, crossinstallSKADNetIDs)
+		if unicornExt.SKADNSupported {
+			skadn := adapters.FilterPrebidSKADNExt(bidderExt.Prebid, unicornExtSKADNetIDs)
+			// only add if present
 			if len(skadn.SKADNetIDs) > 0 {
 				impExt.SKADN = &skadn
 			}
@@ -174,7 +167,7 @@ func (adapter *CrossInstallAdapter) MakeRequests(request *openrtb.BidRequest, _ 
 		uri := adapter.URI
 
 		// assign a region based uri if it exists
-		if endpoint, ok := adapter.SupportedRegions[Region(crossinstallExt.Region)]; ok {
+		if endpoint, ok := adapter.SupportedRegions[Region(unicornExt.Region)]; ok {
 			uri = endpoint
 		}
 
@@ -194,7 +187,7 @@ func (adapter *CrossInstallAdapter) MakeRequests(request *openrtb.BidRequest, _ 
 }
 
 // MakeBids ...
-func (adapter *CrossInstallAdapter) MakeBids(_ *openrtb.BidRequest, externalRequest *adapters.RequestData, response *adapters.ResponseData) (*adapters.BidderResponse, []error) {
+func (adapter *UnicornAdapter) MakeBids(_ *openrtb.BidRequest, externalRequest *adapters.RequestData, response *adapters.ResponseData) (*adapters.BidderResponse, []error) {
 	if response.StatusCode == http.StatusNoContent {
 		return nil, nil
 	}

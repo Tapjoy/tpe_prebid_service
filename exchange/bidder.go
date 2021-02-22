@@ -350,7 +350,7 @@ func (bidder *bidderAdapter) doRequestImpl(ctx context.Context, req *adapters.Re
 	httpReq = newrelic.RequestWithTransactionContext(httpReq, txn)
 
 	// Save a copy of this request for debugging.
-	if req.Uri == "http://exapi-us-east.rubiconproject.com/a/api/exchange.json" {
+	if req.Uri == "http://exapi-us-east.rubiconproject.com/a/api/exchange.json?tk_xint=" {
 		fmt.Println("rubicon us request")
 		requestDump, err := httputil.DumpRequest(httpReq, true)
 		if err != nil {

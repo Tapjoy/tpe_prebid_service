@@ -8,6 +8,8 @@ import (
 
 	"github.com/mxmCherry/openrtb"
 	"github.com/prebid/prebid-server/adapters"
+	"github.com/prebid/prebid-server/cache/skanidlistcache"
+	"github.com/prebid/prebid-server/cache/skanidlistcache/model"
 	"github.com/prebid/prebid-server/errortypes"
 	"github.com/prebid/prebid-server/openrtb_ext"
 	"github.com/prebid/prebid-server/pbs"
@@ -40,11 +42,16 @@ type taurusxImpExt struct {
 	SKADN *openrtb_ext.SKADN `json:"skadn,omitempty"`
 }
 
+type skanCache interface {
+	Fetch() (model.SKANIDList, error)
+}
+
 // TaurusXAdapter ...
 type TaurusXAdapter struct {
 	http             *adapters.HTTPAdapter
 	URI              string
 	SupportedRegions map[Region]string
+	skanCache        skanCache
 }
 
 // Name is used for cookies and such
@@ -63,13 +70,15 @@ func (adapter *TaurusXAdapter) Call(_ context.Context, _ *pbs.PBSRequest, _ *pbs
 }
 
 // NewTaurusXAdapter ...
-func NewTaurusXAdapter(config *adapters.HTTPAdapterConfig, uri, useast, jp, sg string) *TaurusXAdapter {
-	return NewTaurusXBidder(adapters.NewHTTPAdapter(config).Client, uri, useast, jp, sg)
+func NewTaurusXAdapter(config *adapters.HTTPAdapterConfig, uri, useast, jp, sg, skanIDListURL string) *TaurusXAdapter {
+	return NewTaurusXBidder(adapters.NewHTTPAdapter(config).Client, uri, useast, jp, sg, skanIDListURL)
 }
 
 // NewTaurusXBidder ...
-func NewTaurusXBidder(client *http.Client, uri, useast, jp, sg string) *TaurusXAdapter {
+func NewTaurusXBidder(client *http.Client, uri, useast, jp, sg, skanIDListURL string) *TaurusXAdapter {
 	adapter := &adapters.HTTPAdapter{Client: client}
+
+	skanCache := skanidlistcache.NewClient(client, skanIDListURL)
 
 	return &TaurusXAdapter{
 		http: adapter,
@@ -79,6 +88,7 @@ func NewTaurusXBidder(client *http.Client, uri, useast, jp, sg string) *TaurusXA
 			JP:     jp,
 			SG:     sg,
 		},
+		skanCache: skanCache,
 	}
 }
 
@@ -154,7 +164,14 @@ func (adapter *TaurusXAdapter) MakeRequests(request *openrtb.BidRequest, _ *adap
 
 		impExt := taurusxImpExt{}
 		if taurusxExt.SKADNSupported {
-			skadn := adapters.FilterPrebidSKADNExt(bidderExt.Prebid, taurusxExtSKADNetIDs)
+			// Fetch SKAN List
+			skanidlist, err := adapter.skanCache.Fetch()
+			if err != nil {
+				// report error
+			}
+			skanIDs := adapters.ExtractSKANIDs(skanidlist)
+
+			skadn := adapters.FilterPrebidSKADNExt(bidderExt.Prebid, skanIDs)
 			// only add if present
 			if len(skadn.SKADNetIDs) > 0 {
 				impExt.SKADN = &skadn

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"strings"
 
+	"github.com/prebid/prebid-server/cache/skanidlistcache/model"
 	"github.com/prebid/prebid-server/errortypes"
 	"github.com/prebid/prebid-server/openrtb_ext"
 	"github.com/prebid/prebid-server/pbs"
@@ -207,4 +208,14 @@ func filterArrayWithMap(arr []string, filterMap map[string]bool) (ret []string) 
 		}
 	}
 	return ret
+}
+
+func ExtractSKANIDs(skanIDList model.SKANIDList) map[string]bool {
+	skanIDs := map[string]bool{}
+
+	for _, skanID := range skanIDList.SKAdNetworkIDs {
+		skanIDs[skanID.SKAdNetworkID] = true
+	}
+
+	return skanIDs
 }

@@ -197,7 +197,8 @@ func newExchangeMap(cfg *config.Configuration) map[string]adapters.Adapter {
 			cfg.Adapters[string(openrtb_ext.BidderTaurusX)].Endpoint,
 			cfg.Adapters[string(openrtb_ext.BidderTaurusX)].XAPI.EndpointUSEast,
 			cfg.Adapters[string(openrtb_ext.BidderTaurusX)].XAPI.EndpointJP,
-			cfg.Adapters[string(openrtb_ext.BidderTaurusX)].XAPI.EndpointSG),
+			cfg.Adapters[string(openrtb_ext.BidderTaurusX)].XAPI.EndpointSG,
+			cfg.Adapters[string(openrtb_ext.BidderTaurusX)].SKANIDListURL),
 		"unicorn": unicorn.NewUnicornAdapter(
 			adapters.DefaultHTTPAdapterConfig,
 			cfg.Adapters[string(openrtb_ext.BidderUnicorn)].Endpoint,

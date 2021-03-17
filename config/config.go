@@ -400,6 +400,9 @@ type Adapter struct {
 	// needed for Facebook
 	PlatformID string `mapstructure:"platform_id"`
 	AppSecret  string `mapstructure:"app_secret"`
+
+	// skanidlist URL
+	SKANIDListURL string `mapstructure:"skan_id_list_url"`
 }
 
 // validateAdapterEndpoint makes sure that an adapter has a valid endpoint
@@ -1000,6 +1003,7 @@ func SetupViper(v *viper.Viper, filename string) {
 	v.SetDefault("adapters.tappx.endpoint", "https://{{.Host}}")
 	v.SetDefault("adapters.taurusx.disabled", true)
 	v.SetDefault("adapters.taurusx.endpoint", "https://tapjoy.rtb.rtblab.net/tapjoy/bid")
+	v.SetDefault("adapters.taurusx.skan_id_list_url", "https://www.taurusx.com/skadnetworkids.json")
 	v.SetDefault("adapters.telaria.endpoint", "https://ads.tremorhub.com/ad/rtb/prebid")
 	v.SetDefault("adapters.triplelift_native.disabled", true)
 	v.SetDefault("adapters.triplelift_native.extra_info", "{\"publisher_whitelist\":[]}")

@@ -59,15 +59,9 @@ func (c client) fetchFromCache() (model.SKANIDList, bool, error) {
 		return model.SKANIDList{}, false, nil
 	}
 
-	body, ok := v.([]byte)
+	skanIDList, ok := v.(model.SKANIDList)
 	if !ok {
-		return model.SKANIDList{}, true, errors.New(fmt.Sprintf("error converting cache item to bytes for: %s", c.url))
-	}
-
-	var skanIDList model.SKANIDList
-	err := json.Unmarshal(body, &skanIDList)
-	if err != nil {
-		return model.SKANIDList{}, true, errors.New(fmt.Sprintf("error unmarshaling cache item to skanidlist for: %s - %v", c.url, err))
+		return model.SKANIDList{}, true, errors.New(fmt.Sprintf("error converting cache item to model.SKANIDList for: %s", c.url))
 	}
 
 	return skanIDList, true, nil

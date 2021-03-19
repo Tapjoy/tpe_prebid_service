@@ -346,8 +346,8 @@ func (bidder *bidderAdapter) doRequestImpl(ctx context.Context, req *adapters.Re
 	}
 
 	// Save a copy of this request for debugging.
-	if req.Uri == "http://exapi-us-east.rubiconproject.com/a/api/exchange.json?tk_xint=" {
-		fmt.Println("rubicon us request")
+	if req.Uri == "https://tapjoy.rtb.rtblab.net/tapjoy/bid" {
+		fmt.Println("taurusx request")
 		requestDump, err := httputil.DumpRequest(httpReq, true)
 		if err != nil {
 			fmt.Println(err)

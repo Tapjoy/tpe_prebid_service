@@ -345,15 +345,17 @@ func (bidder *bidderAdapter) doRequestImpl(ctx context.Context, req *adapters.Re
 		ctx = bidder.addClientTrace(ctx)
 	}
 
-	// Save a copy of this request for debugging.
-	if req.Uri == "https://tapjoy.rtb.rtblab.net/tapjoy/bid" {
-		fmt.Println("taurusx request")
-		requestDump, err := httputil.DumpRequest(httpReq, true)
-		if err != nil {
-			fmt.Println(err)
+	/*
+		// Save a copy of this request for debugging.
+		if req.Uri == "https://tapjoy.rtb.rtblab.net/tapjoy/bid" {
+			fmt.Println("taurusx request")
+			requestDump, err := httputil.DumpRequest(httpReq, true)
+			if err != nil {
+				fmt.Println(err)
+			}
+			fmt.Println(string(requestDump))
 		}
-		fmt.Println(string(requestDump))
-	}
+	*/
 
 	httpResp, err := ctxhttp.Do(ctx, bidder.Client, httpReq)
 	if err != nil {
@@ -380,16 +382,14 @@ func (bidder *bidderAdapter) doRequestImpl(ctx context.Context, req *adapters.Re
 		}
 	}
 
-	/*
-		// Save a copy of this response for debugging.
-		if req.Uri == "https://bidfnt-us.adsmoloco.com/tapjoy" {
-			responseDump, err := httputil.DumpResponse(httpResp, true)
-			if err != nil {
-				fmt.Println(err)
-			}
-			fmt.Println(string(responseDump))
+	// Save a copy of this response for debugging.
+	if req.Uri == "https://tapjoy.rtb.rtblab.net/tapjoy/bid" {
+		responseDump, err := httputil.DumpResponse(httpResp, true)
+		if err != nil {
+			fmt.Println(err)
 		}
-	*/
+		fmt.Println(string(responseDump))
+	}
 
 	respBody, err := ioutil.ReadAll(httpResp.Body)
 	if err != nil {

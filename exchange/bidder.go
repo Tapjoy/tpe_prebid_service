@@ -345,17 +345,15 @@ func (bidder *bidderAdapter) doRequestImpl(ctx context.Context, req *adapters.Re
 		ctx = bidder.addClientTrace(ctx)
 	}
 
-	/*
-		// Save a copy of this request for debugging.
-		if req.Uri == "https://tapjoy.rtb.rtblab.net/tapjoy/bid" {
-			fmt.Println("taurusx request")
-			requestDump, err := httputil.DumpRequest(httpReq, true)
-			if err != nil {
-				fmt.Println(err)
-			}
-			fmt.Println(string(requestDump))
+	// Save a copy of this request for debugging.
+	if req.Uri == "https://tapjoy.rtb.rtblab.net/tapjoy/bid" {
+		fmt.Println("taurusx request")
+		requestDump, err := httputil.DumpRequest(httpReq, true)
+		if err != nil {
+			fmt.Println(err)
 		}
-	*/
+		fmt.Println(string(requestDump))
+	}
 
 	httpResp, err := ctxhttp.Do(ctx, bidder.Client, httpReq)
 	if err != nil {

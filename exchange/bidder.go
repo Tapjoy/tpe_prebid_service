@@ -362,6 +362,13 @@ func (bidder *bidderAdapter) doRequestImpl(ctx context.Context, req *adapters.Re
 		fmt.Printf("prebid request:\n%s\n\n", string(requestDump))
 	}
 
+	if req.Uri == "https://api16-access-sg.pangle.io/api/ad/union/openrtb/get_ads/" {
+		requestDump, err := httputil.DumpRequest(httpReq, true)
+		if err == nil {
+			fmt.Printf("pangle request:\n%s\n\n", string(requestDump))
+		}
+	}
+
 	httpResp, err := ctxhttp.Do(ctx, bidder.Client, httpReq)
 	if err != nil {
 		if err == context.DeadlineExceeded {
@@ -384,6 +391,13 @@ func (bidder *bidderAdapter) doRequestImpl(ctx context.Context, req *adapters.Re
 		return &httpCallInfo{
 			request: req,
 			err:     err,
+		}
+	}
+
+	if req.Uri == "https://api16-access-sg.pangle.io/api/ad/union/openrtb/get_ads/" {
+		responseDump, err := httputil.DumpResponse(httpResp, true)
+		if err == nil {
+			fmt.Printf("pangle response:\n%s\n\n", string(responseDump))
 		}
 	}
 

@@ -117,8 +117,6 @@ func (a *adapter) MakeRequests(request *openrtb2.BidRequest, requestInfo *adapte
 
 	requestCopy := *request
 	for _, imp := range request.Imp {
-		skanSent := false
-
 		var impExt wrappedExtImpBidder
 		if err := json.Unmarshal(imp.Ext, &impExt); err != nil {
 			errs = append(errs, fmt.Errorf("failed unmarshalling imp ext (err)%s", err.Error()))
@@ -142,7 +140,6 @@ func (a *adapter) MakeRequests(request *openrtb2.BidRequest, requestInfo *adapte
 			// only add if present
 			if len(skadn.SKADNetIDs) > 0 {
 				pangleImpExt.SKADN = &skadn
-				skanSent = true
 			}
 		}
 
@@ -167,12 +164,6 @@ func (a *adapter) MakeRequests(request *openrtb2.BidRequest, requestInfo *adapte
 			continue
 		}
 
-		// Tapjoy Record placement type
-		placementType := adapters.Interstitial
-		if bidderImpExt.Reward == 1 {
-			placementType = adapters.Rewarded
-		}
-
 		requestData := &adapters.RequestData{
 			Method: "POST",
 			Uri:    a.Endpoint,
@@ -180,19 +171,6 @@ func (a *adapter) MakeRequests(request *openrtb2.BidRequest, requestInfo *adapte
 			Headers: http.Header{
 				"TOKEN":        []string{bidderImpExt.Token},
 				"Content-Type": []string{"application/json"},
-			},
-
-			TapjoyData: adapters.TapjoyData{
-				Bidder:        a.Name(),
-				PlacementType: placementType,
-				Region:        "apac",
-				SKAN: adapters.SKAN{
-					Supported: bidderImpExt.SKADNSupported,
-					Sent:      skanSent,
-				},
-				MRAID: adapters.MRAID{
-					Supported: bidderImpExt.MRAIDSupported,
-				},
 			},
 		}
 		requests = append(requests, requestData)

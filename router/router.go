@@ -15,7 +15,6 @@ import (
 	"github.com/newrelic/go-agent/v3/integrations/nrhttprouter"
 	nr "github.com/newrelic/go-agent/v3/newrelic"
 	"github.com/prebid/prebid-server/pbsmetrics"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 
 	"github.com/prebid/prebid-server/adapters"
 	"github.com/prebid/prebid-server/adapters/adform"
@@ -254,8 +253,7 @@ func New(cfg *config.Configuration, rateConvertor *currencies.RateConverter) (r 
 		},
 	}
 
-	nrTransport := nr.NewRoundTripper(generalHttpClient.Transport)
-	generalHttpClient.Transport = otelhttp.NewTransport(nrTransport)
+	generalHttpClient.Transport = nr.NewRoundTripper(generalHttpClient.Transport)
 
 	cacheHttpClient := &http.Client{
 		Transport: &http.Transport{

@@ -326,10 +326,8 @@ func (a *PubmaticAdapter) MakeRequests(request *openrtb.BidRequest, reqInfo *ada
 	wrapExt := ""
 	pubID := ""
 
-	var impData pubmaticImpData
 	for i := 0; i < len(request.Imp); i++ {
-		impData, err = parseImpressionObject(&request.Imp[i], &wrapExt, &pubID)
-
+		err = parseImpressionObject(&request.Imp[i], &wrapExt, &pubID)
 		// If the parsing is failed, remove imp and add the error.
 		if err != nil {
 			errs = append(errs, err)
@@ -378,18 +376,6 @@ func (a *PubmaticAdapter) MakeRequests(request *openrtb.BidRequest, reqInfo *ada
 		return nil, errs
 	}
 
-	// Tapjoy Record placement type
-	placementType := adapters.Interstitial
-	if impData.pubmatic.Reward == 1 {
-		placementType = adapters.Rewarded
-	}
-
-	skanSent := false
-	// only add if present
-	if len(adapters.FilterPrebidSKADNExt(impData.bidder.Prebid, skanidlist.Get(openrtb_ext.BidderPubmatic)).SKADNetIDs) > 0 {
-		skanSent = true
-	}
-
 	headers := http.Header{}
 	headers.Add("Content-Type", "application/json;charset=utf-8")
 	headers.Add("Accept", "application/json")
@@ -398,19 +384,6 @@ func (a *PubmaticAdapter) MakeRequests(request *openrtb.BidRequest, reqInfo *ada
 		Uri:     thisURI,
 		Body:    reqJSON,
 		Headers: headers,
-
-		TapjoyData: adapters.TapjoyData{
-			Bidder:        a.Name(),
-			PlacementType: placementType,
-			Region:        "us_east",
-			SKAN: adapters.SKAN{
-				Supported: impData.pubmatic.SKADNSupported,
-				Sent:      skanSent,
-			},
-			MRAID: adapters.MRAID{
-				Supported: impData.pubmatic.MRAIDSupported,
-			},
-		},
 	}}, errs
 }
 
@@ -481,19 +454,11 @@ func assignBannerSize(banner *openrtb.Banner) error {
 	return nil
 }
 
-// Tapjoy type for returning useful data from
-type pubmaticImpData struct {
-	bidder   adapters.ExtImpBidder
-	pubmatic openrtb_ext.ExtImpPubmatic
-}
-
 // parseImpressionObject parse the imp to get it ready to send to pubmatic
-func parseImpressionObject(imp *openrtb.Imp, wrapExt *string, pubID *string) (pubmaticImpData, error) {
-	pubImpData := pubmaticImpData{}
-
+func parseImpressionObject(imp *openrtb.Imp, wrapExt *string, pubID *string) error {
 	// PubMatic supports banner and video impressions.
 	if imp.Banner == nil && imp.Video == nil {
-		return pubImpData, fmt.Errorf("Invalid MediaType. PubMatic only supports Banner and Video. Ignoring ImpID=%s", imp.ID)
+		return fmt.Errorf("Invalid MediaType. PubMatic only supports Banner and Video. Ignoring ImpID=%s", imp.ID)
 	}
 
 	if imp.Audio != nil {
@@ -502,15 +467,13 @@ func parseImpressionObject(imp *openrtb.Imp, wrapExt *string, pubID *string) (pu
 
 	var bidderExt adapters.ExtImpBidder
 	if err := json.Unmarshal(imp.Ext, &bidderExt); err != nil {
-		return pubImpData, err
+		return err
 	}
-	pubImpData.bidder = bidderExt
 
 	var pubmaticExt openrtb_ext.ExtImpPubmatic
 	if err := json.Unmarshal(bidderExt.Bidder, &pubmaticExt); err != nil {
-		return pubImpData, err
+		return err
 	}
-	pubImpData.pubmatic = pubmaticExt
 
 	if *pubID == "" {
 		*pubID = pubmaticExt.PublisherId
@@ -521,18 +484,18 @@ func parseImpressionObject(imp *openrtb.Imp, wrapExt *string, pubID *string) (pu
 		var wrapExtMap map[string]int
 		err := json.Unmarshal([]byte(pubmaticExt.WrapExt), &wrapExtMap)
 		if err != nil {
-			return pubImpData, fmt.Errorf("Error in Wrapper Parameters = %v  for ImpID = %v WrapperExt = %v", err.Error(), imp.ID, string(pubmaticExt.WrapExt))
+			return fmt.Errorf("Error in Wrapper Parameters = %v  for ImpID = %v WrapperExt = %v", err.Error(), imp.ID, string(pubmaticExt.WrapExt))
 		}
 		*wrapExt = string(pubmaticExt.WrapExt)
 	}
 
 	if err := validateAdSlot(strings.TrimSpace(pubmaticExt.AdSlot), imp); err != nil {
-		return pubImpData, err
+		return err
 	}
 
 	if pubmaticExt.MRAIDSupported && imp.Banner != nil {
 		if err := assignBannerSize(imp.Banner); err != nil {
-			return pubImpData, err
+			return err
 		}
 	} else {
 		imp.Banner = nil
@@ -546,10 +509,10 @@ func parseImpressionObject(imp *openrtb.Imp, wrapExt *string, pubID *string) (pu
 	}
 
 	if err := populateImpressionExtensionObject(imp, bidderExt, pubmaticExt); err != nil {
-		return pubImpData, err
+		return err
 	}
 
-	return pubImpData, nil
+	return nil
 
 }
 

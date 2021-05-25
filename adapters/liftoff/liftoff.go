@@ -131,8 +131,6 @@ func (a *LiftoffAdapter) MakeRequests(request *openrtb.BidRequest, reqInfo *adap
 	requestImpCopy := request.Imp
 
 	for i := 0; i < numRequests; i++ {
-		skanSent := false
-
 		thisImp := requestImpCopy[i]
 
 		var bidderExt adapters.ExtImpBidder
@@ -207,7 +205,6 @@ func (a *LiftoffAdapter) MakeRequests(request *openrtb.BidRequest, reqInfo *adap
 		if liftoffExt.SKADNSupported {
 			skadn := adapters.FilterPrebidSKADNExt(bidderExt.Prebid, liftoffSKADNetIDs)
 			if len(skadn.SKADNetIDs) > 0 {
-				skanSent = true
 				impExt.SKADN = &skadn
 			}
 		}
@@ -238,19 +235,6 @@ func (a *LiftoffAdapter) MakeRequests(request *openrtb.BidRequest, reqInfo *adap
 			Uri:     uri,
 			Body:    reqJSON,
 			Headers: headers,
-
-			TapjoyData: adapters.TapjoyData{
-				Bidder:        a.Name(),
-				PlacementType: placementType,
-				Region:        liftoffExt.Region,
-				SKAN: adapters.SKAN{
-					Supported: liftoffExt.SKADNSupported,
-					Sent:      skanSent,
-				},
-				MRAID: adapters.MRAID{
-					Supported: liftoffExt.MRAIDSupported,
-				},
-			},
 		}
 
 		requestData = append(requestData, reqData)

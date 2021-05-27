@@ -25,10 +25,6 @@
           "w": 320,
           "h": 480,
           "ext": {
-            "dv360": {
-              "adtype": 7,
-              "rewarded": 1
-            },
             "imptrackers": [
               "https://lb-www2.foobar.com/ads/notify.php?auction_id=${AUCTION_ID}&winning_price=${AUCTION_PRICE}",
               "https://lb-www2.foobar2.com/ads/notify.php?auction_id=${AUCTION_ID}&winning_price=${AUCTION_PRICE}",

@@ -1,6 +1,5 @@
 maintainer:
   email: unknown@gmail.com
-modifyingVastXmlAllowed: true
 capabilities:
   app:
     mediaTypes:

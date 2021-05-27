@@ -91,6 +91,7 @@ data:
   # dv360 values
   PBS_ADAPTERS_DV360_DISABLED: "false"
   PBS_ADAPTERS_DV360_ENDPOINT: "http://localhost:4646/dv360_givemeads"
+  PBS_ADAPTERS_DV360_XAPI_ENDPOINT_US_EAST: "http://localhost:4646/dv360_givemeads"
 
   # liftoff values
   PBS_ADAPTERS_LIFTOFF_DISABLED:              "false"

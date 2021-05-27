@@ -141,7 +141,10 @@ func newAdapterMap(client *http.Client, cfg *config.Configuration, infos adapter
 			cfg.Adapters[string(openrtb_ext.BidderCrossInstall)].XAPI.EndpointUSWest),
 		openrtb_ext.BidderDatablocks: datablocks.NewDatablocksBidder(cfg.Adapters[string(openrtb_ext.BidderDatablocks)].Endpoint),
 		openrtb_ext.BidderDmx:        dmx.NewDmxBidder(cfg.Adapters[string(openrtb_ext.BidderDmx)].Endpoint),
-		openrtb_ext.BidderDV360:      dv360.NewDV360Bidder(client, cfg.Adapters[string(openrtb_ext.BidderDV360)].Endpoint),
+		openrtb_ext.BidderDV360: dv360.NewDV360Bidder(
+			client,
+			cfg.Adapters[string(openrtb_ext.BidderDV360)].Endpoint,
+			cfg.Adapters[string(openrtb_ext.BidderDV360)].XAPI.EndpointUSEast),
 		openrtb_ext.BidderEmxDigital: emx_digital.NewEmxDigitalBidder(cfg.Adapters[string(openrtb_ext.BidderEmxDigital)].Endpoint),
 		openrtb_ext.BidderEngageBDR:  engagebdr.NewEngageBDRBidder(client, cfg.Adapters[string(openrtb_ext.BidderEngageBDR)].Endpoint),
 		openrtb_ext.BidderEPlanning:  eplanning.NewEPlanningBidder(client, cfg.Adapters[string(openrtb_ext.BidderEPlanning)].Endpoint),

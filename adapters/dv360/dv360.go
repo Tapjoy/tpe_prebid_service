@@ -6,280 +6,275 @@ import (
 	"fmt"
 	"net/http"
 
-	openrtb2 "github.com/mxmCherry/openrtb"
+	"github.com/mxmCherry/openrtb"
 	"github.com/prebid/prebid-server/adapters"
-	"github.com/prebid/prebid-server/config"
 	"github.com/prebid/prebid-server/errortypes"
 	"github.com/prebid/prebid-server/openrtb_ext"
 	"github.com/prebid/prebid-server/pbs"
 )
 
-type adapter struct {
-	Endpoint string
+// SKAN IDs must be lower case
+var dv360SKADNetIDs = map[string]bool{
+	"fill_me_in.skadnetwork": true,
 }
 
-type wrappedExtImpBidder struct {
-	*adapters.ExtImpBidder
-	AdType int `json:"adtype,omitempty"`
-}
+// Region ...
+type Region string
+
+const (
+	USEast Region = "us_east"
+)
 
 type dv360ImpExt struct {
-	AdType int                `json:"adtype,omitempty"`
-	SKADN  *openrtb_ext.SKADN `json:"skadn,omitempty"`
+	SKADN *openrtb_ext.SKADN `json:"skadn,omitempty"`
 }
 
-type dv360BidExt struct {
-	DV360 *bidExt `json:"dv360,omitempty"`
+type dv360VideoExt struct {
+	Rewarded int `json:"rewarded"`
 }
 
-type bidExt struct {
-	AdType *int  `json:"adtype,omitempty"`
-	MRAID  []int `json:"apis,omitempty"`
+// DV360Adapter ...
+type DV360Adapter struct {
+	http             *adapters.HTTPAdapter
+	URI              string
+	SupportedRegions map[Region]string
 }
 
 // Name is used for cookies and such
-func (a *adapter) Name() string {
+func (adapter *DV360Adapter) Name() string {
 	return "dv360"
 }
 
 // SkipNoCookies ...
-func (a *adapter) SkipNoCookies() bool {
+func (adapter *DV360Adapter) SkipNoCookies() bool {
 	return false
 }
 
 // Call is legacy, and added only to support DV360 interface
-func (a *adapter) Call(_ context.Context, _ *pbs.PBSRequest, _ *pbs.PBSBidder) (pbs.PBSBidSlice, error) {
+func (adapter *DV360Adapter) Call(_ context.Context, _ *pbs.PBSRequest, _ *pbs.PBSBidder) (pbs.PBSBidSlice, error) {
 	return pbs.PBSBidSlice{}, nil
 }
 
 // NewDV360Adapter ...
-func NewDV360Adapter(config *adapters.HTTPAdapterConfig, uri string) *adapter {
-	return NewDV360Bidder(adapters.NewHTTPAdapter(config).Client, uri)
+func NewDV360Adapter(config *adapters.HTTPAdapterConfig, uri, useast string) *DV360Adapter {
+	return NewDV360Bidder(adapters.NewHTTPAdapter(config).Client, uri, useast)
 }
 
 // NewDV360Bidder ...
-func NewDV360Bidder(_ *http.Client, uri string) *adapter {
-	return &adapter{
-		Endpoint: uri,
+func NewDV360Bidder(client *http.Client, uri, useast string) *DV360Adapter {
+	return &DV360Adapter{
+		http: &adapters.HTTPAdapter{Client: client},
+		URI:  uri,
+		SupportedRegions: map[Region]string{
+			USEast: useast,
+		},
 	}
 }
 
-/* Builder */
+func (adapter *DV360Adapter) MakeRequests(request *openrtb.BidRequest, requestInfo *adapters.ExtraRequestInfo) ([]*adapters.RequestData, []error) {
+	// number of requests
+	numRequests := len(request.Imp)
 
-func Builder(bidderName openrtb_ext.BidderName, config config.Adapter) (adapters.Bidder, error) {
-	bidder := &adapter{
-		Endpoint: config.Endpoint,
-	}
+	requestData := make([]*adapters.RequestData, 0, numRequests)
 
-	return bidder, nil
-}
+	// headers
+	headers := http.Header{}
+	headers.Add("Content-Type", "application/json")
+	headers.Add("Accept", "application/json")
+	headers.Add("User-Agent", "prebid-server/1.0")
 
-/* MakeRequests */
+	// errors
+	errs := make([]error, 0, numRequests)
 
-func getAdType(imp openrtb2.Imp, parsedImpExt *wrappedExtImpBidder) int {
-	// attempt to get tj adtype and return if successful
-	if adType, err := getTjAdType(imp, parsedImpExt); err == nil {
-		return adType
-	}
+	// clone the request imp array
+	requestImpCopy := request.Imp
 
-	// video
-	if imp.Video != nil {
-		if parsedImpExt != nil && parsedImpExt.Prebid != nil && parsedImpExt.Prebid.IsRewardedInventory == 1 {
-			return 7
-		}
-		if imp.Instl == 1 {
-			return 8
-		}
-	}
-	// banner
-	if imp.Banner != nil {
-		if imp.Instl == 1 {
-			return 2
-		} else {
-			return 1
-		}
-	}
-	// native
-	if imp.Native != nil && len(imp.Native.Request) > 0 {
-		return 5
-	}
+	var err error
 
-	return -1
-}
+	for i := 0; i < numRequests; i++ {
+		// clone current imp
+		impCopy := requestImpCopy[i]
 
-func (a *adapter) MakeRequests(request *openrtb2.BidRequest, requestInfo *adapters.ExtraRequestInfo) ([]*adapters.RequestData, []error) {
-	var requests []*adapters.RequestData
-	var errs []error
-
-	requestCopy := *request
-	for _, imp := range request.Imp {
-		skanSent := false
-
-		var impExt wrappedExtImpBidder
-		if err := json.Unmarshal(imp.Ext, &impExt); err != nil {
-			errs = append(errs, fmt.Errorf("failed unmarshalling imp ext (err)%s", err.Error()))
+		// extract bidder extension
+		var bidderExt adapters.ExtImpBidder
+		if err = json.Unmarshal(impCopy.Ext, &bidderExt); err != nil {
+			errs = append(errs, &errortypes.BadInput{
+				Message: err.Error(),
+			})
 			continue
 		}
 
-		var bidderImpExt openrtb_ext.ImpExtDV360
-		if err := json.Unmarshal(impExt.Bidder, &bidderImpExt); err != nil {
-			errs = append(errs, fmt.Errorf("failed unmarshalling bidder imp ext (err)%s", err.Error()))
+		// unmarshal bidder extension to dv360 extension
+		var dv360Ext openrtb_ext.ExtImpDV360
+		if err = json.Unmarshal(bidderExt.Bidder, &dv360Ext); err != nil {
+			errs = append(errs, &errortypes.BadInput{
+				Message: err.Error(),
+			})
 			continue
 		}
 
-		var dv360ImpExt dv360ImpExt
+		rewarded := 0
+		if dv360Ext.Reward == 1 {
+			rewarded = 1
+		}
 
-		// detect and fill adtype
-		if adType := getAdType(imp, &impExt); adType == -1 {
-			errs = append(errs, &errortypes.BadInput{Message: "not a supported adtype"})
-			continue
-		} else {
-			dv360ImpExt.AdType = adType
-			if newImpExt, err := json.Marshal(dv360ImpExt); err == nil {
-				imp.Ext = newImpExt
-			} else {
-				errs = append(errs, fmt.Errorf("failed re-marshalling imp ext with adtype"))
-				continue
+		// if there is adapter banner object
+		if impCopy.Banner != nil {
+			// check if mraid is supported for this dsp
+			if !dv360Ext.MRAIDSupported {
+				// we don't support mraid, remove the banner object
+				impCopy.Banner = nil
 			}
 		}
 
-		requestCopy.Imp = []openrtb2.Imp{imp}
-		requestJSON, err := json.Marshal(requestCopy)
+		// if we have a video object
+		if impCopy.Video != nil {
+			// make a copy of the video object
+			videoCopy := *impCopy.Video
+
+			// instantiate dv360 video extension
+			videoExt := dv360VideoExt{
+				Rewarded: rewarded,
+			}
+
+			// convert dv360 video extension to json
+			// and append to copied video object
+			videoCopy.Ext, err = json.Marshal(&videoExt)
+			if err != nil {
+				errs = append(errs, err)
+				continue
+			}
+
+			// assign copied video object to copied impression object
+			impCopy.Video = &videoCopy
+		}
+
+		// initial value
+		skanSent := false
+
+		// create impression extension object
+		impExt := dv360ImpExt{}
+
+		// check if skan is supported
+		if dv360Ext.SKADNSupported {
+			// get skan data
+			skadn := adapters.FilterPrebidSKADNExt(bidderExt.Prebid, dv360SKADNetIDs)
+
+			// if we have skan data
+			if len(skadn.SKADNetIDs) > 0 {
+				// set to true
+				skanSent = true
+
+				// apply skan data to impression extension object
+				impExt.SKADN = &skadn
+			}
+		}
+
+		// json marshal the impression extension and apply to
+		// copied impression object
+		impCopy.Ext, err = json.Marshal(&impExt)
 		if err != nil {
 			errs = append(errs, err)
 			continue
 		}
 
-		// Tapjoy Record placement type
-		placementType := adapters.Interstitial
-		if bidderImpExt.Reward == 1 {
-			placementType = adapters.Rewarded
+		// apply the copied impression object as an array
+		// to the request object
+		request.Imp = []openrtb.Imp{impCopy}
+
+		// json marshal the request
+		body, err := json.Marshal(request)
+		if err != nil {
+			errs = append(errs, err)
+			continue
 		}
 
-		requestData := &adapters.RequestData{
-			Method: "POST",
-			Uri:    a.Endpoint,
-			Body:   requestJSON,
-			Headers: http.Header{
-				"Content-Type": []string{"application/json"},
-			},
+		// assign the default uri
+		uri := adapter.URI
+
+		// assign adapter region based uri if it exists
+		if endpoint, ok := adapter.SupportedRegions[Region(dv360Ext.Region)]; ok {
+			uri = endpoint
+		}
+
+		// build request data object
+		reqData := &adapters.RequestData{
+			Method:  "POST",
+			Uri:     uri,
+			Body:    body,
+			Headers: headers,
 
 			TapjoyData: adapters.TapjoyData{
-				Bidder:        a.Name(),
-				PlacementType: placementType,
-				Region:        "apac",
+				Bidder: adapter.Name(),
+				Region: dv360Ext.Region,
 				SKAN: adapters.SKAN{
-					Sent: skanSent,
+					Supported: dv360Ext.SKADNSupported,
+					Sent:      skanSent,
 				},
 				MRAID: adapters.MRAID{
-					Supported: bidderImpExt.Apis != nil,
+					Supported: dv360Ext.MRAIDSupported,
 				},
 			},
 		}
-		requests = append(requests, requestData)
+
+		// append to request data array
+		requestData = append(requestData, reqData)
 	}
 
-	return requests, errs
+	return requestData, errs
 }
 
-/* MakeBids */
-
-func getMediaTypeForBid(bid *openrtb2.Bid) (openrtb_ext.BidType, error) {
-	if bid == nil {
-		return "", fmt.Errorf("the bid request object is nil")
-	}
-
-	var bidExt dv360BidExt
-	if err := json.Unmarshal(bid.Ext, &bidExt); err != nil {
-		return "", fmt.Errorf("invalid bid ext")
-	} else if bidExt.DV360 == nil || bidExt.DV360.AdType == nil {
-		return "", fmt.Errorf("missing dv360Ext/adtype in bid ext")
-	}
-
-	switch *bidExt.DV360.AdType {
-	case 1:
-		return openrtb_ext.BidTypeBanner, nil
-	case 2:
-		return openrtb_ext.BidTypeBanner, nil
-	case 5:
-		return openrtb_ext.BidTypeNative, nil
-	case 7:
-		return openrtb_ext.BidTypeVideo, nil
-	case 8:
-		return openrtb_ext.BidTypeVideo, nil
-	}
-
-	return "", fmt.Errorf("unrecognized adtype in response")
-}
-
-func (a *adapter) MakeBids(request *openrtb2.BidRequest, requestData *adapters.RequestData, responseData *adapters.ResponseData) (*adapters.BidderResponse, []error) {
-	if responseData.StatusCode == http.StatusNoContent {
+func (adapter *DV360Adapter) MakeBids(_ *openrtb.BidRequest, externalRequest *adapters.RequestData, response *adapters.ResponseData) (*adapters.BidderResponse, []error) {
+	if response.StatusCode == http.StatusNoContent {
 		return nil, nil
 	}
 
-	if responseData.StatusCode == http.StatusBadRequest {
-		err := &errortypes.BadInput{
-			Message: "Unexpected status code: 400. Bad request from publisher. Run with request.debug = 1 for more info.",
-		}
+	if response.StatusCode == http.StatusBadRequest {
+		return nil, []error{&errortypes.BadInput{
+			Message: fmt.Sprintf("Unexpected status code: %d. Run with request.debug = 1 for more info", response.StatusCode),
+		}}
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return nil, []error{&errortypes.BadServerResponse{
+			Message: fmt.Sprintf("Unexpected status code: %d. Run with request.debug = 1 for more info", response.StatusCode),
+		}}
+	}
+
+	var bidResp openrtb.BidResponse
+	if err := json.Unmarshal(response.Body, &bidResp); err != nil {
+		return nil, []error{&errortypes.BadServerResponse{
+			Message: err.Error(),
+		}}
+	}
+
+	if len(bidResp.SeatBid) == 0 {
+		return nil, nil
+	}
+
+	bidResponse := adapters.NewBidderResponseWithBidsCapacity(len(bidResp.SeatBid[0].Bid))
+
+	var bidReq openrtb.BidRequest
+	if err := json.Unmarshal(externalRequest.Body, &bidReq); err != nil {
 		return nil, []error{err}
 	}
 
-	if responseData.StatusCode != http.StatusOK {
-		err := &errortypes.BadServerResponse{
-			Message: fmt.Sprintf("Unexpected status code: %d. Run with request.debug = 1 for more info.", responseData.StatusCode),
-		}
-		return nil, []error{err}
+	bidType := openrtb_ext.BidTypeBanner
+
+	if bidReq.Imp[0].Video != nil {
+		bidType = openrtb_ext.BidTypeVideo
 	}
 
-	var response openrtb2.BidResponse
-	if err := json.Unmarshal(responseData.Body, &response); err != nil {
-		return nil, []error{err}
-	}
-
-	var errs []error
-	bidResponse := adapters.NewBidderResponseWithBidsCapacity(1)
-	bidResponse.Currency = response.Cur
-	for _, seatBid := range response.SeatBid {
-		for _, temp := range seatBid.Bid {
-			bid := temp // avoid taking address of a for loop variable
-			mediaType, err := getMediaTypeForBid(&bid)
-			if err != nil {
-				errs = append(errs, err)
-				continue
+	for _, sb := range bidResp.SeatBid {
+		for _, b := range sb.Bid {
+			if b.Price != 0 {
+				bidResponse.Bids = append(bidResponse.Bids, &adapters.TypedBid{
+					Bid:     &b,
+					BidType: bidType,
+				})
 			}
-			b := &adapters.TypedBid{
-				Bid:     &bid,
-				BidType: mediaType,
-			}
-			bidResponse.Bids = append(bidResponse.Bids, b)
 		}
 	}
 
-	return bidResponse, errs
-}
-
-func getTjAdType(imp openrtb2.Imp, parsedImpExt *wrappedExtImpBidder) (int, error) {
-	// for setting token
-	var bidderImpExt openrtb_ext.ImpExtDV360
-	if err := json.Unmarshal(parsedImpExt.Bidder, &bidderImpExt); err != nil {
-		return 0, err
-	}
-
-	// video
-	if imp.Video != nil {
-		if bidderImpExt.Reward == 1 {
-			return 7, nil
-		} else {
-			return 8, nil
-		}
-	}
-
-	// banner
-	if imp.Banner != nil {
-		if bidderImpExt.Reward == 1 {
-			return 1, nil
-		}
-	}
-
-	return 0, fmt.Errorf("unable to find a tapjoy adtype")
+	return bidResponse, nil
 }

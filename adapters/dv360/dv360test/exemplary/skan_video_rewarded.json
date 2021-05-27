@@ -34,7 +34,6 @@
         },
         "ext": {
           "bidder": {
-            "token": "123",
             "reward": 1,
             "mraid_supported": false,
             "skadn_supported": true
@@ -44,7 +43,7 @@
               "version": "",
               "sourceapp": "",
               "skadnetids": [
-                "22mmun2rn5.skadnetwork"
+                "fill_me_in.skadnetwork"
               ]
             }
           }
@@ -61,10 +60,9 @@
           "imp": [
             {
               "ext": {
-                "adtype": 7,
                 "skadn": {
                   "skadnetids": [
-                    "22mmun2rn5.skadnetwork"
+                    "fill_me_in.skadnetwork"
                   ]
                 }
               },
@@ -95,7 +93,10 @@
                   2,
                   3,
                   4
-                ]
+                ],
+                "ext": {
+                  "rewarded": 1
+                }
               }
             }
           ]
@@ -118,11 +119,7 @@
                   "crid": "crid_10",
                   "w": 1024,
                   "h": 576,
-                  "ext": {
-                    "dv360": {
-                      "adtype": 7
-                    }
-                  }
+                  "ext": {}
                 }
               ]
             }

@@ -34,7 +34,6 @@
         },
         "ext": {
           "bidder": {
-            "token": "123",
             "reward": 0,
             "mraid_supported": false,
             "skadn_supported": false
@@ -51,9 +50,7 @@
           "id": "test-request-id",
           "imp": [
             {
-              "ext": {
-                "adtype": 8
-              },
+              "ext": {},
               "id": "test-imp-id",
               "video": {
                 "mimes": [
@@ -81,7 +78,10 @@
                   2,
                   3,
                   4
-                ]
+                ],
+                "ext": {
+                  "rewarded": 0
+                }
               }
             }
           ]
@@ -104,11 +104,7 @@
                   "crid": "crid_10",
                   "w": 1024,
                   "h": 576,
-                  "ext": {
-                    "dv360": {
-                      "adtype": 8
-                    }
-                  }
+                  "ext": {}
                 }
               ]
             }

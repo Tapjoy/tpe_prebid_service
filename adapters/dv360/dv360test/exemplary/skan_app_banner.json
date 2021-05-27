@@ -20,7 +20,6 @@
         },
         "ext": {
           "bidder": {
-            "token": "123",
             "reward": 1,
             "mraid_supported": true,
             "skadn_supported": true
@@ -30,7 +29,7 @@
               "version": "",
               "sourceapp": "",
               "skadnetids": [
-                "22mmun2rn5.skadnetwork"
+                "fill_me_in.skadnetwork"
               ]
             }
           }
@@ -43,11 +42,14 @@
       "expectedRequest": {
         "uri": "https://bid.g.doubleclick.net/xbbe/bid/tapjoy",
         "headers": {
-          "Content-Type": [
+          "Accept": [
             "application/json"
           ],
-          "TOKEN": [
-            "123"
+          "User-Agent": [
+            "prebid-server/1.0"
+          ],
+          "Content-Type": [
+            "application/json"
           ]
         },
         "body": {
@@ -70,10 +72,9 @@
                 ]
               },
               "ext": {
-                "adtype": 1,
                 "skadn": {
                   "skadnetids": [
-                    "22mmun2rn5.skadnetwork"
+                    "fill_me_in.skadnetwork"
                   ]
                 }
               }
@@ -98,11 +99,7 @@
                   "crid": "test-crid",
                   "h": 250,
                   "w": 300,
-                  "ext": {
-                    "dv360": {
-                      "adtype": 1
-                    }
-                  }
+                  "ext": {}
                 }
               ]
             }
@@ -126,11 +123,7 @@
             "crid": "test-crid",
             "w": 300,
             "h": 250,
-            "ext": {
-              "dv360": {
-                "adtype": 1
-              }
-            }
+            "ext": {}
           },
           "type": "banner"
         }

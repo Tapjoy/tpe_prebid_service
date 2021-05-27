@@ -61,7 +61,7 @@ endpoints = [
   Endpoint.new('../../responses/unicorn/fill_low_bid.json', 'POST', '/unicorn_givemeads'),
   Endpoint.new('../../responses/pubmatic/fill_low_bid.json', 'POST', '/pubmatic_givemeads'),
   Endpoint.new('../../responses/molococloud/fill_low_bid.json', 'POST', '/molococloud_givemeads'),
-  Endpoint.new('../../responses/pangle/fill_high_bid.json', 'POST', '/pangle_givemeads'),
+  Endpoint.new('../../responses/pangle/fill_low_bid.json', 'POST', '/pangle_givemeads'),
   Endpoint.new('../../responses/dv360/fill_high_bid.json', 'POST', '/dv360_givemeads'),
 ]
 

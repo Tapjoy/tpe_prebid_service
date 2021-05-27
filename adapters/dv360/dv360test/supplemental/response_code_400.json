@@ -20,7 +20,6 @@
         },
         "ext": {
           "bidder": {
-            "token": "123",
             "reward": 0,
             "mraid_supported": true,
             "skadn_supported": false
@@ -34,11 +33,14 @@
       "expectedRequest": {
         "uri": "https://bid.g.doubleclick.net/xbbe/bid/tapjoy",
         "headers": {
-          "Content-Type": [
+          "Accept": [
             "application/json"
           ],
-          "TOKEN": [
-            "123"
+          "User-Agent": [
+            "prebid-server/1.0"
+          ],
+          "Content-Type": [
+            "application/json"
           ]
         },
         "body": {
@@ -60,9 +62,7 @@
                   }
                 ]
               },
-              "ext": {
-                "adtype": 1
-              }
+              "ext": {}
             }
           ]
         }

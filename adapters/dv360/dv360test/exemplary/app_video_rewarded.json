@@ -29,7 +29,6 @@
             "is_rewarded_inventory": 1
           },
           "bidder": {
-            "token": "123",
             "reward": 1,
             "mraid_supported": false,
             "skadn_supported": false
@@ -43,11 +42,14 @@
       "expectedRequest": {
         "uri": "https://bid.g.doubleclick.net/xbbe/bid/tapjoy",
         "headers": {
-          "Content-Type": [
+          "Accept": [
             "application/json"
           ],
-          "TOKEN": [
-            "123"
+          "User-Agent": [
+            "prebid-server/1.0"
+          ],
+          "Content-Type": [
+            "application/json"
           ]
         },
         "body": {
@@ -72,12 +74,10 @@
                 "w": 1024,
                 "h": 576,
                 "ext": {
-                  "foo": "bar"
+                  "rewarded": 1
                 }
               },
-              "ext": {
-                "adtype": 7
-              }
+              "ext": {}
             }
           ]
         }
@@ -99,11 +99,7 @@
                   "crid": "test-crid",
                   "h": 250,
                   "w": 300,
-                  "ext": {
-                    "dv360": {
-                      "adtype": 7
-                    }
-                  }
+                  "ext": {}
                 }
               ]
             }
@@ -127,11 +123,7 @@
             "crid": "test-crid",
             "w": 300,
             "h": 250,
-            "ext": {
-              "dv360": {
-                "adtype": 7
-              }
-            }
+            "ext": {}
           },
           "type": "video"
         }

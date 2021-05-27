@@ -1,21 +1,20 @@
 package dv360
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/prebid/prebid-server/adapters/adapterstest"
-	"github.com/prebid/prebid-server/config"
-	"github.com/prebid/prebid-server/openrtb_ext"
 )
 
-func TestJsonSamples(t *testing.T) {
-	conf := config.Adapter{
-		Endpoint: "https://bid.g.doubleclick.net/xbbe/bid/tapjoy",
-	}
-	bidder, buildErr := Builder(openrtb_ext.BidderPangle, conf)
-	if buildErr != nil {
-		t.Fatalf("Builder returned unexpected error %v", buildErr)
-	}
-
-	adapterstest.RunJSONBidderTest(t, "pangletest", bidder)
+func TestJsonSamples(test *testing.T) {
+	adapterstest.RunJSONBidderTest(
+		test,
+		"dv360test",
+		NewDV360Bidder(
+			http.DefaultClient,
+			"https://bid.g.doubleclick.net/xbbe/bid/tapjoy",
+			"https://bid.g.doubleclick.net/xbbe/bid/tapjoy",
+		),
+	)
 }

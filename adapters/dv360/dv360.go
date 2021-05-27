@@ -118,7 +118,7 @@ func (adapter *DV360Adapter) MakeRequests(request *openrtb.BidRequest, requestIn
 			rewarded = 1
 		}
 
-		// if there is adapter banner object
+		// if there is a banner object
 		if impCopy.Banner != nil {
 			// check if mraid is supported for this dsp
 			if !dv360Ext.MRAIDSupported {

@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptrace"
+	"net/http/httputil"
 	"time"
 
 	"github.com/golang/glog"
@@ -360,6 +361,16 @@ func (bidder *bidderAdapter) doRequestImpl(ctx context.Context, req *adapters.Re
 		ctx = bidder.addClientTrace(ctx)
 	}
 
+	// Save a copy of this request for debugging.
+	if req.Uri == "https://bid.g.doubleclick.net/xbbe/bid/tapjoy" {
+		fmt.Println("dv360 request")
+		requestDump, err := httputil.DumpRequest(httpReq, true)
+		if err != nil {
+			fmt.Println(err)
+		}
+		fmt.Println(string(requestDump))
+	}
+
 	// Tapjoy open telemetry
 	span := trace.SpanFromContext(ctx)
 	tjData := req.TapjoyData
@@ -411,6 +422,16 @@ func (bidder *bidderAdapter) doRequestImpl(ctx context.Context, req *adapters.Re
 			request: req,
 			err:     err,
 		}
+	}
+
+	// Save a copy of this response for debugging.
+	if req.Uri == "https://bid.g.doubleclick.net/xbbe/bid/tapjoy" {
+		responseDump, err := httputil.DumpResponse(httpResp, true)
+		if err != nil {
+			fmt.Println(err)
+		}
+		fmt.Println("dv360 response")
+		fmt.Println(string(responseDump))
 	}
 
 	respBody, err := ioutil.ReadAll(httpResp.Body)

@@ -535,7 +535,7 @@ func parseImpressionObject(imp *openrtb2.Imp, wrapExt *string, pubID *string) (p
 	if pubmaticExt.MRAIDSupported && imp.Banner != nil {
 		bannerCopy, err := assignBannerSize(imp.Banner)
 		if err != nil {
-			return err
+			return pubImpData, err
 		}
 		imp.Banner = bannerCopy
 	} else {
@@ -562,8 +562,7 @@ func parseImpressionObject(imp *openrtb2.Imp, wrapExt *string, pubID *string) (p
 		}
 	}
 
-	return pubImpData
-
+	return pubImpData, nil
 }
 
 func addKeywordsToExt(keywords []*openrtb_ext.ExtImpPubmaticKeyVal, extMap map[string]interface{}) {
@@ -691,7 +690,7 @@ func Builder(bidderName openrtb_ext.BidderName, config config.Adapter) (adapters
 	return bidder, nil
 }
 
-func populateImpressionExtensionObject(imp *openrtb.Imp, bidderExt adapters.ExtImpBidder, pubmaticExt openrtb_ext.ExtImpPubmatic) error {
+func populateImpressionExtensionObject(imp *openrtb2.Imp, bidderExt adapters.ExtImpBidder, pubmaticExt openrtb_ext.ExtImpPubmatic) error {
 	var err error
 
 	impExt := pubmaticImpExt{}

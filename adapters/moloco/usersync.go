@@ -9,5 +9,5 @@ import (
 
 // NewMolocoSyncer ...
 func NewMolocoSyncer(template *template.Template) usersync.Usersyncer {
-	return adapters.NewSyncer("moloco", 807, template, adapters.SyncTypeRedirect)
+	return adapters.NewSyncer("moloco", template, adapters.SyncTypeRedirect)
 }

@@ -9,5 +9,5 @@ import (
 
 // NewTaurusXSyncer ...
 func NewTaurusXSyncer(template *template.Template) usersync.Usersyncer {
-	return adapters.NewSyncer("taurusx", 807, template, adapters.SyncTypeRedirect)
+	return adapters.NewSyncer("taurusx", template, adapters.SyncTypeRedirect)
 }

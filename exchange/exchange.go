@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
-	"net/http"
 	"net/url"
 	"runtime/debug"
 	"sort"
@@ -15,8 +14,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/newrelic/go-agent/v3/newrelic"
 	"github.com/mxmCherry/openrtb/v15/openrtb2"
+	"github.com/newrelic/go-agent/v3/newrelic"
 	"github.com/prebid/prebid-server/stored_requests"
 	"go.opentelemetry.io/otel/trace"
 
@@ -433,13 +432,13 @@ func (e *exchange) getAllBids(
 		txn := newrelic.FromContext(ctx)
 
 		// Here we actually call the adapters and collect the bids.
-		bidderRunner := e.recoverSafely(bidderRequests, func(ctx, txn, bidderRequest BidderRequest, conversions currency.Conversions) {
+		bidderRunner := e.recoverSafely(bidderRequests, func(ctx context.Context, txn *newrelic.Transaction, bidderRequest BidderRequest, conversions currency.Conversions) {
 
 			ctx = newrelic.NewContext(ctx, txn)
-			ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, string(aName))
+			ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, string(bidderRequest.BidderName))
 			defer span.End()
 
-			skanidlist.Update(ctx, e.adapterMap[coreBidder].client(), coreBidder)
+			skanidlist.Update(ctx, e.adapterMap[bidderRequest.BidderCoreName].client(), bidderRequest.BidderCoreName)
 
 			// Passing in aName so a doesn't change out from under the go routine
 			if bidderRequest.BidderLabels.Adapter == "" {
@@ -490,7 +489,7 @@ func (e *exchange) getAllBids(
 			}
 			chBids <- brw
 		}, chBids)
-		go bidderRunner(bidder, conversions)
+		go bidderRunner(ctx, txn.NewGoroutine(), bidder, conversions)
 	}
 	// Wait for the bidders to do their thing
 	for i := 0; i < len(bidderRequests); i++ {
@@ -513,7 +512,7 @@ func (e *exchange) getAllBids(
 
 func (e *exchange) recoverSafely(bidderRequests []BidderRequest,
 	inner func(context.Context, *newrelic.Transaction, BidderRequest, currency.Conversions),
-	chBids chan *bidResponseWrapper) func(context.Context, *newrelic.Transaction, bidderRequest BidderRequest, conversions currency.Conversions) {
+	chBids chan *bidResponseWrapper) func(context.Context, *newrelic.Transaction, BidderRequest, currency.Conversions) {
 	return func(ctx context.Context, txn *newrelic.Transaction, bidderRequest BidderRequest, conversions currency.Conversions) {
 		defer func() {
 			if r := recover(); r != nil {
@@ -528,7 +527,10 @@ func (e *exchange) recoverSafely(bidderRequests []BidderRequest,
 					allBidders = sb.String()[:sb.Len()-1]
 				}
 
-				nr.NoticeError(ctx, fmt.Errorf("OpenRTB auction recovered panic from Bidder %s: %v. Stack trace is: %v", coreBidder, r, string(debug.Stack())))
+				nr.NoticeError(ctx, fmt.Errorf("OpenRTB auction recovered panic from Bidder %s: %v. "+
+					"Account id: %s, All Bidders: %s, Stack trace is: %v",
+					bidderRequest.BidderCoreName, r, bidderRequest.BidderLabels.PubID, allBidders, string(debug.Stack())))
+
 				glog.Errorf("OpenRTB auction recovered panic from Bidder %s: %v. "+
 					"Account id: %s, All Bidders: %s, Stack trace is: %v",
 					bidderRequest.BidderCoreName, r, bidderRequest.BidderLabels.PubID, allBidders, string(debug.Stack()))

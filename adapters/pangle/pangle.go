@@ -173,7 +173,7 @@ func (a *adapter) MakeRequests(request *openrtb2.BidRequest, requestInfo *adapte
 			},
 
 			TapjoyData: adapters.TapjoyData{
-				Bidder:        a.Name(),
+				Bidder:        "pangle",
 				PlacementType: placementType,
 				Region:        "apac",
 				SKAN: adapters.SKAN{

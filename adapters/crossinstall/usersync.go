@@ -9,5 +9,5 @@ import (
 
 // NewCrossInstallSyncer ...
 func NewCrossInstallSyncer(template *template.Template) usersync.Usersyncer {
-	return adapters.NewSyncer("crossinstall", 807, template, adapters.SyncTypeRedirect)
+	return adapters.NewSyncer("crossinstall", template, adapters.SyncTypeRedirect)
 }

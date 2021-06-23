@@ -9,5 +9,5 @@ import (
 
 // NewLiftoffSyncer ...
 func NewLiftoffSyncer(temp *template.Template) usersync.Usersyncer {
-	return adapters.NewSyncer("liftoff", 667, temp, adapters.SyncTypeRedirect)
+	return adapters.NewSyncer("liftoff", temp, adapters.SyncTypeRedirect)
 }

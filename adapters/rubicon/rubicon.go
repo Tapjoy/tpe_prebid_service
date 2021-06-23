@@ -13,7 +13,6 @@ import (
 	"github.com/golang/glog"
 	"github.com/jinzhu/copier"
 
-
 	"github.com/mxmCherry/openrtb/v15/openrtb2"
 	"github.com/prebid/prebid-server/adapters"
 	"github.com/prebid/prebid-server/cache/skanidlist"
@@ -32,14 +31,7 @@ const (
 	USWest Region = "us_west"
 	EU     Region = "eu"
 	APAC   Region = "apac"
-
-	badvLimitSize = 50
 )
-
-// SKAN IDs must be lower case
-var rubiconSKADNetIDs = map[string]bool{
-	"abc": true,
-}
 
 const badvLimitSize = 50
 
@@ -725,10 +717,6 @@ func Builder(bidderName openrtb_ext.BidderName, config config.Adapter) (adapters
 	return bidder, nil
 }
 
-func NewRubiconAdapter(config *adapters.HTTPAdapterConfig, uri string, xuser string, xpass string, tracker string, useast string, uswest string, eu string, apac string) *RubiconAdapter {
-	return NewRubiconLegacyAdapter(adapters.NewHTTPAdapter(config).Client, uri, xuser, xpass, tracker, useast, uswest, eu, apac)
-}
-
 func NewRubiconLegacyAdapter(httpConfig *adapters.HTTPAdapterConfig, uri, xuser, xpass, tracker, useast, uswest, eu, apac string) *RubiconAdapter {
 	a := adapters.NewHTTPAdapter(httpConfig)
 
@@ -759,7 +747,7 @@ func (a *RubiconAdapter) MakeRequests(request *openrtb2.BidRequest, reqInfo *ada
 	headers.Add("Accept", "application/json")
 	headers.Add("User-Agent", "prebid-server/1.0")
 
-	rubiconRequest := openrtb.BidRequest{}
+	rubiconRequest := openrtb2.BidRequest{}
 	copier.CopyWithOption(&rubiconRequest, &request, copier.Option{IgnoreEmpty: false, DeepCopy: true})
 
 	requestImpCopy := rubiconRequest.Imp
@@ -848,11 +836,11 @@ func (a *RubiconAdapter) MakeRequests(request *openrtb2.BidRequest, reqInfo *ada
 			userCopy := *request.User
 			userExtRP := rubiconUserExt{RP: rubiconUserExtRP{Target: rubiconExt.Visitor}}
 
-			# what is this for? umut eric shahbaz samson
-			#if err := updateUserExtWithIabAttribute(&userExtRP, userCopy.Data); err != nil {
-			#	errs = append(errs, err)
-			#	continue
-			#}
+			// what is this for? umut eric shahbaz samson
+			//if err := updateUserExtWithIabAttribute(&userExtRP, userCopy.Data); err != nil {
+			//	errs = append(errs, err)
+			//	continue
+			//}
 
 			if request.User.Ext != nil {
 				var userExt *openrtb_ext.ExtUser
@@ -1241,7 +1229,7 @@ func (a *RubiconAdapter) MakeBids(internalRequest *openrtb2.BidRequest, external
 	return bidResponse, nil
 }
 
-func injectAqID(bid *openrtb.Bid, aqid string) {
+func injectAqID(bid *openrtb2.Bid, aqid string) {
 	var bidExt rubiconBidExt
 	if err := json.Unmarshal(bid.Ext, &bidExt); err != nil {
 		return

@@ -15,8 +15,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/newrelic/go-agent/v3/newrelic"
 	"github.com/mxmCherry/openrtb/v15/openrtb2"
+	"github.com/newrelic/go-agent/v3/newrelic"
 	"github.com/prebid/prebid-server/adapters"
 	"github.com/prebid/prebid-server/config"
 	"github.com/prebid/prebid-server/currency"
@@ -31,7 +31,6 @@ import (
 	"github.com/prebid/prebid-server/stored_requests/backends/file_fetcher"
 
 	"github.com/buger/jsonparser"
-	"github.com/rcrowley/go-metrics"
 	"github.com/stretchr/testify/assert"
 	"github.com/yudai/gojsondiff"
 	"github.com/yudai/gojsondiff/formatter"

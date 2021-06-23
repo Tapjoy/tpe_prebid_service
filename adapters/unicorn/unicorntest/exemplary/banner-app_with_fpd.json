@@ -24,7 +24,8 @@
             "accountId": 199578,
             "publisherId": 123456,
             "mediaId": "test_media",
-            "placementId": "test_placement"
+            "placementId": "test_placement",
+            "mraid_supported": true
           },
           "context": {
             "data": {
@@ -124,7 +125,8 @@
               "is_rewarded_inventory": 0,
               "storedrequest": {
                 "id": "test"
-              }
+              },
+              "skadn": {}
             },
             "accountId": 199578
           },
@@ -138,7 +140,11 @@
                     "h": 250,
                     "w": 300
                   }
-                ]
+                ],
+                "ext": {
+                  "allowscustomclosebutton": false,
+                  "rewarded": 0
+                }
               },
               "ext": {
                 "bidder": {
@@ -146,15 +152,8 @@
                   "publisherId": 123456,
                   "mediaId": "test_media",
                   "placementId": "test_placement"
-                },
-                "context": {
-                  "data": {
-                    "firstPartyData1": ["firstPartyData1"],
-                    "uuid": ["xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"]
-                  }
                 }
               },
-              "tagid": "test_placement",
               "id": "29D2F33E-F865-40DA-9320-16EF77935254",
               "secure": 1
             }

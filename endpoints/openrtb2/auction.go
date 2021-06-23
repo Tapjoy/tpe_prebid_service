@@ -118,10 +118,7 @@ func (deps *endpointDeps) Auction(w http.ResponseWriter, r *http.Request, _ http
 	// to compute the auction timeout.
 	start := time.Now()
 
-	// shahbaz / umut / eric / samson look at this
-	// do we have r.Context or context.Background()
-	// as per below???
-	// ctx := r.Context()
+	ctx := context.Background()
 
 	ao := analytics.AuctionObject{
 		Status:    http.StatusOK,
@@ -159,8 +156,6 @@ func (deps *endpointDeps) Auction(w http.ResponseWriter, r *http.Request, _ http
 		return
 	}
 	warnings := errortypes.WarningOnly(errL)
-
-	ctx := context.Background()
 
 	timeout := deps.cfg.AuctionTimeouts.LimitAuctionTimeout(time.Duration(req.TMax) * time.Millisecond)
 	if timeout > 0 {

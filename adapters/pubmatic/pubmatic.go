@@ -535,7 +535,7 @@ func parseImpressionObject(imp *openrtb2.Imp, wrapExt *string, pubID *string) (p
 	if pubmaticExt.MRAIDSupported && imp.Banner != nil {
 		bannerCopy, err := assignBannerSize(imp.Banner)
 		if err != nil {
-			return err
+			return pubImpData, err
 		}
 		imp.Banner = bannerCopy
 	} else {
@@ -554,16 +554,18 @@ func parseImpressionObject(imp *openrtb2.Imp, wrapExt *string, pubID *string) (p
 		extMap[pmZoneIDKeyName] = pubmaticExt.PmZoneID
 	}
 
-	imp.Ext = nil
-	if len(extMap) > 0 {
-		ext, err := json.Marshal(extMap)
-		if err == nil {
-			imp.Ext = ext
-		}
+	if err := populateExtensionMap(extMap, bidderExt, pubmaticExt); err != nil {
+		return pubImpData, err
 	}
 
-	return pubImpData
+	ext, err := json.Marshal(extMap)
+	if err == nil {
+		imp.Ext = ext
+	} else {
+		imp.Ext = nil
+	}
 
+	return pubImpData, nil
 }
 
 func addKeywordsToExt(keywords []*openrtb_ext.ExtImpPubmaticKeyVal, extMap map[string]interface{}) {
@@ -691,13 +693,9 @@ func Builder(bidderName openrtb_ext.BidderName, config config.Adapter) (adapters
 	return bidder, nil
 }
 
-func populateImpressionExtensionObject(imp *openrtb.Imp, bidderExt adapters.ExtImpBidder, pubmaticExt openrtb_ext.ExtImpPubmatic) error {
-	var err error
-
-	impExt := pubmaticImpExt{}
-
+func populateExtensionMap(imp map[string]interface{}, bidderExt adapters.ExtImpBidder, pubmaticExt openrtb_ext.ExtImpPubmatic) error {
 	if pubmaticExt.Reward == 1 {
-		impExt.Reward = 1
+		imp["reward"] = pubmaticExt.Reward
 	}
 
 	if pubmaticExt.SKADNSupported {
@@ -707,13 +705,8 @@ func populateImpressionExtensionObject(imp *openrtb.Imp, bidderExt adapters.ExtI
 
 		// only add if present
 		if len(skadn.SKADNetIDs) > 0 {
-			impExt.SKADN = &skadn
+			imp["skadn"] = &skadn
 		}
-	}
-
-	imp.Ext, err = json.Marshal(&impExt)
-	if err != nil {
-		return err
 	}
 
 	return nil

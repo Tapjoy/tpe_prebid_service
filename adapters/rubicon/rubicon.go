@@ -13,7 +13,6 @@ import (
 	"github.com/golang/glog"
 	"github.com/jinzhu/copier"
 
-
 	"github.com/mxmCherry/openrtb/v15/openrtb2"
 	"github.com/prebid/prebid-server/adapters"
 	"github.com/prebid/prebid-server/cache/skanidlist"
@@ -32,14 +31,7 @@ const (
 	USWest Region = "us_west"
 	EU     Region = "eu"
 	APAC   Region = "apac"
-
-	badvLimitSize = 50
 )
-
-// SKAN IDs must be lower case
-var rubiconSKADNetIDs = map[string]bool{
-	"abc": true,
-}
 
 const badvLimitSize = 50
 
@@ -348,7 +340,8 @@ func (rbr rubiconBidResponse) AqID() string {
 }
 
 type rubiconBidExt struct {
-	RP rubiconBidExtRP `json:"rp,omitempty"`
+	RP     rubiconBidExtRP     `json:"rp,omitempty"`
+	Prebid rubiconBidExtPrebid `json:"prebid,omitempty"`
 }
 
 type rubiconBidExtRP struct {
@@ -356,6 +349,10 @@ type rubiconBidExtRP struct {
 	Mime   string `json:"mime,omitempty"`
 	SizeID int    `json:"size_id,omitempty"`
 	AqID   string `json:"aqid,omitempty"`
+}
+
+type rubiconBidExtPrebid struct {
+	Type string `json:"type,omitempty"`
 }
 
 type mappedRubiconUidsParam struct {
@@ -725,10 +722,6 @@ func Builder(bidderName openrtb_ext.BidderName, config config.Adapter) (adapters
 	return bidder, nil
 }
 
-func NewRubiconAdapter(config *adapters.HTTPAdapterConfig, uri string, xuser string, xpass string, tracker string, useast string, uswest string, eu string, apac string) *RubiconAdapter {
-	return NewRubiconLegacyAdapter(adapters.NewHTTPAdapter(config).Client, uri, xuser, xpass, tracker, useast, uswest, eu, apac)
-}
-
 func NewRubiconLegacyAdapter(httpConfig *adapters.HTTPAdapterConfig, uri, xuser, xpass, tracker, useast, uswest, eu, apac string) *RubiconAdapter {
 	a := adapters.NewHTTPAdapter(httpConfig)
 
@@ -759,7 +752,7 @@ func (a *RubiconAdapter) MakeRequests(request *openrtb2.BidRequest, reqInfo *ada
 	headers.Add("Accept", "application/json")
 	headers.Add("User-Agent", "prebid-server/1.0")
 
-	rubiconRequest := openrtb.BidRequest{}
+	rubiconRequest := openrtb2.BidRequest{}
 	copier.CopyWithOption(&rubiconRequest, &request, copier.Option{IgnoreEmpty: false, DeepCopy: true})
 
 	requestImpCopy := rubiconRequest.Imp
@@ -848,11 +841,10 @@ func (a *RubiconAdapter) MakeRequests(request *openrtb2.BidRequest, reqInfo *ada
 			userCopy := *request.User
 			userExtRP := rubiconUserExt{RP: rubiconUserExtRP{Target: rubiconExt.Visitor}}
 
-			# what is this for? umut eric shahbaz samson
-			#if err := updateUserExtWithIabAttribute(&userExtRP, userCopy.Data); err != nil {
-			#	errs = append(errs, err)
-			#	continue
-			#}
+			if err := updateUserExtWithIabAttribute(&userExtRP, userCopy.Data); err != nil {
+				errs = append(errs, err)
+				continue
+			}
 
 			if request.User.Ext != nil {
 				var userExt *openrtb_ext.ExtUser
@@ -901,11 +893,16 @@ func (a *RubiconAdapter) MakeRequests(request *openrtb2.BidRequest, reqInfo *ada
 		}
 
 		if thisImp.Video != nil {
-			if rubiconExt.Video.VideoSizeID == 0 {
-				errs = append(errs, &errortypes.BadInput{
-					Message: fmt.Sprintf("imp[%d].ext.bidder.rubicon.video.size_id must be defined for video impression", i),
-				})
-				continue
+
+			videoSizeId := rubiconExt.Video.VideoSizeID
+
+			if videoSizeId == 0 {
+				resolvedSizeId, err := resolveVideoSizeId(thisImp.Video.Placement, thisImp.Instl, thisImp.ID)
+				if err != nil {
+					errs = append(errs, err)
+					continue
+				}
+				videoSizeId = resolvedSizeId
 			}
 
 			// if imp.ext.is_rewarded_inventory = 1, set imp.video.ext.videotype = "rewarded"
@@ -916,7 +913,7 @@ func (a *RubiconAdapter) MakeRequests(request *openrtb2.BidRequest, reqInfo *ada
 			}
 
 			videoCopy := *thisImp.Video
-			videoExt := rubiconVideoExt{Skip: rubiconExt.Video.Skip, SkipDelay: rubiconExt.Video.SkipDelay, VideoType: videoType, RP: rubiconVideoExtRP{SizeID: rubiconExt.Video.VideoSizeID}}
+			videoExt := rubiconVideoExt{Skip: rubiconExt.Video.Skip, SkipDelay: rubiconExt.Video.SkipDelay, VideoType: videoType, RP: rubiconVideoExtRP{SizeID: videoSizeId}}
 			videoCopy.Ext, err = json.Marshal(&videoExt)
 
 			for i, companionAd := range videoCopy.CompanionAd {
@@ -1228,7 +1225,7 @@ func (a *RubiconAdapter) MakeBids(internalRequest *openrtb2.BidRequest, external
 					bid.ID = bidResp.BidID
 				}
 
-				injectAqID(&bid, rubiconBidResp.AqID())
+				injectAqID(&bid, rubiconBidResp.AqID(), bidType)
 
 				bidResponse.Bids = append(bidResponse.Bids, &adapters.TypedBid{
 					Bid:     &bid,
@@ -1241,13 +1238,16 @@ func (a *RubiconAdapter) MakeBids(internalRequest *openrtb2.BidRequest, external
 	return bidResponse, nil
 }
 
-func injectAqID(bid *openrtb.Bid, aqid string) {
+func injectAqID(bid *openrtb2.Bid, aqid string, bidType openrtb_ext.BidType) {
 	var bidExt rubiconBidExt
 	if err := json.Unmarshal(bid.Ext, &bidExt); err != nil {
 		return
 	}
 
 	bidExt.RP.AqID = aqid
+	bidExt.Prebid = rubiconBidExtPrebid{
+		Type: string(bidType),
+	}
 	rawBidExt, err := json.Marshal(bidExt)
 	if err != nil {
 		return

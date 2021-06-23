@@ -177,10 +177,10 @@ func (a *adapter) MakeRequests(request *openrtb2.BidRequest, requestInfo *adapte
 		}
 
 		impExt.Bidder = openrtb_ext.ExtImpUnicorn{
-			PlacementID:    unicornExt.PlacementID,
-			PublisherID:    unicornExt.PublisherID,
-			MediaID:        unicornExt.MediaID,
-			AccountID:      unicornExt.AccountID,
+			PlacementID: unicornExt.PlacementID,
+			PublisherID: unicornExt.PublisherID,
+			MediaID:     unicornExt.MediaID,
+			AccountID:   unicornExt.AccountID,
 		}
 
 		thisImp.Ext, err = json.Marshal(&impExt)

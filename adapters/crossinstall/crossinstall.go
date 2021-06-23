@@ -40,7 +40,7 @@ type crossinstallBannerExt struct {
 // CrossInstallAdapter ...
 type adapter struct {
 	http             *adapters.HTTPAdapter
-	endpoint              string
+	endpoint         string
 	SupportedRegions map[Region]string
 }
 
@@ -73,8 +73,8 @@ func NewCrossInstallLegacyAdapter(config *adapters.HTTPAdapterConfig, uri, useas
 
 func NewCrossInstallBidder(client *http.Client, uri, useast, uswest string) *adapter {
 	return &adapter{
-		http: &adapters.HTTPAdapter{Client: client},
-		endpoint:  uri,
+		http:     &adapters.HTTPAdapter{Client: client},
+		endpoint: uri,
 		SupportedRegions: map[Region]string{
 			USEast: useast,
 			USWest: uswest,

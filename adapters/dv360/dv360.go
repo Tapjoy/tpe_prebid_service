@@ -37,7 +37,7 @@ type dv360DeviceExt struct {
 
 type adapter struct {
 	http             *adapters.HTTPAdapter
-	endpoint              string
+	endpoint         string
 	SupportedRegions map[Region]string
 }
 
@@ -69,8 +69,8 @@ func NewDV360LegacyAdapter(config *adapters.HTTPAdapterConfig, uri string) *adap
 
 func NewDV360Bidder(client *http.Client, uri string) *adapter {
 	return &adapter{
-		http: &adapters.HTTPAdapter{Client: client},
-		endpoint:  uri,
+		http:     &adapters.HTTPAdapter{Client: client},
+		endpoint: uri,
 		SupportedRegions: map[Region]string{
 			USEast: uri,
 		},

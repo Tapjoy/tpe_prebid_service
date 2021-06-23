@@ -86,8 +86,8 @@ func Builder(_ openrtb_ext.BidderName, config config.Adapter) (adapters.Bidder, 
 		endpoint: config.Endpoint,
 		SupportedRegions: map[Region]string{
 			USEast: config.XAPI.EndpointUSEast,
-			EU: config.XAPI.EndpointEU,
-			APAC: config.XAPI.EndpointAPAC,
+			EU:     config.XAPI.EndpointEU,
+			APAC:   config.XAPI.EndpointAPAC,
 		},
 	}
 	return bidder, nil
@@ -99,8 +99,8 @@ func NewLiftoffLegacyAdapter(config *adapters.HTTPAdapterConfig, uri string, use
 
 func NewLiftoffBidder(client *http.Client, uri string, useast string, eu string, apac string) *adapter {
 	return &adapter{
-		http: &adapters.HTTPAdapter{Client: client},
-		endpoint:  uri,
+		http:     &adapters.HTTPAdapter{Client: client},
+		endpoint: uri,
 		SupportedRegions: map[Region]string{
 			USEast: useast,
 			EU:     eu,

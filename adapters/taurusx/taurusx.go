@@ -65,8 +65,8 @@ func Builder(_ openrtb_ext.BidderName, config config.Adapter) (adapters.Bidder, 
 		endpoint: config.Endpoint,
 		SupportedRegions: map[Region]string{
 			USEast: config.XAPI.EndpointUSEast,
-			JP: config.XAPI.EndpointJP,
-			SG: config.XAPI.EndpointSG,
+			JP:     config.XAPI.EndpointJP,
+			SG:     config.XAPI.EndpointSG,
 		},
 	}
 	return bidder, nil
@@ -78,8 +78,8 @@ func NewTaurusXLegacyAdapter(config *adapters.HTTPAdapterConfig, uri, useast, jp
 
 func NewTaurusXBidder(client *http.Client, uri, useast, jp, sg string) *adapter {
 	return &adapter{
-		http: &adapters.HTTPAdapter{Client: client},
-		endpoint:  uri,
+		http:     &adapters.HTTPAdapter{Client: client},
+		endpoint: uri,
 		SupportedRegions: map[Region]string{
 			USEast: useast,
 			JP:     jp,

@@ -64,8 +64,8 @@ func Builder(_ openrtb_ext.BidderName, config config.Adapter) (adapters.Bidder, 
 		endpoint: config.Endpoint,
 		SupportedRegions: map[Region]string{
 			USEast: config.XAPI.EndpointUSEast,
-			EU: config.XAPI.EndpointEU,
-			APAC: config.XAPI.EndpointAPAC,
+			EU:     config.XAPI.EndpointEU,
+			APAC:   config.XAPI.EndpointAPAC,
 		},
 	}
 	return bidder, nil
@@ -79,7 +79,7 @@ func NewMolocoCloudLegacyAdapter(config *adapters.HTTPAdapterConfig, endpoint, u
 // NewMolocoCloudBidder ...
 func NewMolocoCloudBidder(client *http.Client, endpoint, useast, eu, apac string) *adapter {
 	return &adapter{
-		http: &adapters.HTTPAdapter{Client: client},
+		http:     &adapters.HTTPAdapter{Client: client},
 		endpoint: endpoint,
 		SupportedRegions: map[Region]string{
 			USEast: useast,

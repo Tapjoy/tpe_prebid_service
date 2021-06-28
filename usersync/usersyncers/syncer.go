@@ -1,7 +1,6 @@
 package usersyncers
 
 import (
-	"github.com/prebid/prebid-server/adapters/pubmatic"
 	"strings"
 	"text/template"
 
@@ -40,6 +39,7 @@ import (
 	"github.com/prebid/prebid-server/adapters/datablocks"
 	"github.com/prebid/prebid-server/adapters/deepintent"
 	"github.com/prebid/prebid-server/adapters/dmx"
+	"github.com/prebid/prebid-server/adapters/e_volution"
 	"github.com/prebid/prebid-server/adapters/emx_digital"
 	"github.com/prebid/prebid-server/adapters/engagebdr"
 	"github.com/prebid/prebid-server/adapters/eplanning"
@@ -64,6 +64,7 @@ import (
 	"github.com/prebid/prebid-server/adapters/onetag"
 	"github.com/prebid/prebid-server/adapters/openx"
 	"github.com/prebid/prebid-server/adapters/outbrain"
+	"github.com/prebid/prebid-server/adapters/pubmatic"
 	"github.com/prebid/prebid-server/adapters/pulsepoint"
 	"github.com/prebid/prebid-server/adapters/rhythmone"
 	"github.com/prebid/prebid-server/adapters/rtbhouse"
@@ -72,6 +73,7 @@ import (
 	"github.com/prebid/prebid-server/adapters/smartadserver"
 	"github.com/prebid/prebid-server/adapters/smartrtb"
 	"github.com/prebid/prebid-server/adapters/smartyads"
+	"github.com/prebid/prebid-server/adapters/smilewanted"
 	"github.com/prebid/prebid-server/adapters/somoaudience"
 	"github.com/prebid/prebid-server/adapters/sonobi"
 	"github.com/prebid/prebid-server/adapters/sovrn"
@@ -136,6 +138,7 @@ func NewSyncerMap(cfg *config.Configuration) map[openrtb_ext.BidderName]usersync
 	insertIntoMap(cfg, syncers, openrtb_ext.BidderDeepintent, deepintent.NewDeepintentSyncer)
 	insertIntoMap(cfg, syncers, openrtb_ext.BidderDmx, dmx.NewDmxSyncer)
 	insertIntoMap(cfg, syncers, openrtb_ext.BidderEmxDigital, emx_digital.NewEMXDigitalSyncer)
+	insertIntoMap(cfg, syncers, openrtb_ext.BidderEVolution, evolution.NewEvolutionSyncer)
 	insertIntoMap(cfg, syncers, openrtb_ext.BidderEngageBDR, engagebdr.NewEngageBDRSyncer)
 	insertIntoMap(cfg, syncers, openrtb_ext.BidderEPlanning, eplanning.NewEPlanningSyncer)
 	insertIntoMap(cfg, syncers, openrtb_ext.BidderAudienceNetwork, audienceNetwork.NewFacebookSyncer)
@@ -172,6 +175,7 @@ func NewSyncerMap(cfg *config.Configuration) map[openrtb_ext.BidderName]usersync
 	insertIntoMap(cfg, syncers, openrtb_ext.BidderSmartAdserver, smartadserver.NewSmartadserverSyncer)
 	insertIntoMap(cfg, syncers, openrtb_ext.BidderSmartRTB, smartrtb.NewSmartRTBSyncer)
 	insertIntoMap(cfg, syncers, openrtb_ext.BidderSmartyAds, smartyads.NewSmartyAdsSyncer)
+	insertIntoMap(cfg, syncers, openrtb_ext.BidderSmileWanted, smilewanted.NewSmileWantedSyncer)
 	insertIntoMap(cfg, syncers, openrtb_ext.BidderSynacormedia, synacormedia.NewSynacorMediaSyncer)
 	insertIntoMap(cfg, syncers, openrtb_ext.BidderTappx, tappx.NewTappxSyncer)
 	insertIntoMap(cfg, syncers, openrtb_ext.BidderTelaria, telaria.NewTelariaSyncer)

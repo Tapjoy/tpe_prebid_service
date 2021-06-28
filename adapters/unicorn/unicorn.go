@@ -56,6 +56,7 @@ type unicornVideoExt struct {
 	Rewarded int `json:"rewarded"`
 }
 
+// Builder builds a new instance of the UNICORN adapter for the given bidder with the given config.
 func Builder(bidderName openrtb_ext.BidderName, config config.Adapter) (adapters.Bidder, error) {
 	bidder := &adapter{
 		endpoint: config.Endpoint,
@@ -115,7 +116,7 @@ func (a *adapter) MakeRequests(request *openrtb2.BidRequest, requestInfo *adapte
 		var bidderExt adapters.ExtImpBidder
 		if err = json.Unmarshal(thisImp.Ext, &bidderExt); err != nil {
 			errs = append(errs, &errortypes.BadInput{
-				Message: err.Error(),
+				Message: fmt.Sprintf("Error while decoding imp[%d].ext: %s", i, err),
 			})
 			continue
 		}
@@ -124,7 +125,7 @@ func (a *adapter) MakeRequests(request *openrtb2.BidRequest, requestInfo *adapte
 		var unicornExt openrtb_ext.ExtImpUnicorn
 		if err = json.Unmarshal(bidderExt.Bidder, &unicornExt); err != nil {
 			errs = append(errs, &errortypes.BadInput{
-				Message: err.Error(),
+				Message: fmt.Sprintf("Error while decoding imp[%d].ext: %s", i, err),
 			})
 			continue
 		}

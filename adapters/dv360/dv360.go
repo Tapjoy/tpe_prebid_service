@@ -96,9 +96,12 @@ func (adapter *adapter) MakeRequests(request *openrtb.BidRequest, _ *adapters.Ex
 	requestImpCopy := request.Imp
 
 	// clone the request device
-	requestDeviceCopy := request.Device
-	if requestDeviceCopy == nil {
-		requestDeviceCopy = &openrtb.Device{}
+	var requestDeviceCopy openrtb.Device
+
+	if request.Device != nil {
+		requestDeviceCopy = *request.Device
+	} else {
+		requestDeviceCopy = openrtb.Device{}
 	}
 
 	var err error
@@ -162,7 +165,7 @@ func (adapter *adapter) MakeRequests(request *openrtb.BidRequest, _ *adapters.Ex
 			errs = append(errs, err)
 		}
 
-		request.Device = requestDeviceCopy
+		request.Device = &requestDeviceCopy
 
 		rewarded := 0
 		if dv360Ext.Reward == 1 {

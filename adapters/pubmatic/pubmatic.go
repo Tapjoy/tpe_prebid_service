@@ -554,12 +554,15 @@ func parseImpressionObject(imp *openrtb2.Imp, wrapExt *string, pubID *string) (p
 		extMap[pmZoneIDKeyName] = pubmaticExt.PmZoneID
 	}
 
-	imp.Ext = nil
-	if len(extMap) > 0 {
-		ext, err := json.Marshal(extMap)
-		if err == nil {
-			imp.Ext = ext
-		}
+	if err := populateExtensionMap(extMap, bidderExt, pubmaticExt); err != nil {
+		return pubImpData, err
+	}
+
+	ext, err := json.Marshal(extMap)
+	if err == nil {
+		imp.Ext = ext
+	} else {
+		imp.Ext = nil
 	}
 
 	return pubImpData, nil
@@ -690,13 +693,9 @@ func Builder(bidderName openrtb_ext.BidderName, config config.Adapter) (adapters
 	return bidder, nil
 }
 
-func populateImpressionExtensionObject(imp *openrtb2.Imp, bidderExt adapters.ExtImpBidder, pubmaticExt openrtb_ext.ExtImpPubmatic) error {
-	var err error
-
-	impExt := pubmaticImpExt{}
-
+func populateExtensionMap(imp map[string]interface{}, bidderExt adapters.ExtImpBidder, pubmaticExt openrtb_ext.ExtImpPubmatic) error {
 	if pubmaticExt.Reward == 1 {
-		impExt.Reward = 1
+		imp["reward"] = pubmaticExt.Reward
 	}
 
 	if pubmaticExt.SKADNSupported {
@@ -706,13 +705,8 @@ func populateImpressionExtensionObject(imp *openrtb2.Imp, bidderExt adapters.Ext
 
 		// only add if present
 		if len(skadn.SKADNetIDs) > 0 {
-			impExt.SKADN = &skadn
+			imp["skadn"] = &skadn
 		}
-	}
-
-	imp.Ext, err = json.Marshal(&impExt)
-	if err != nil {
-		return err
 	}
 
 	return nil

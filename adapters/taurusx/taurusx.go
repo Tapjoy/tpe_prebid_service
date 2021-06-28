@@ -7,7 +7,7 @@ import (
 	"github.com/prebid/prebid-server/config"
 	"net/http"
 
-	openrtb "github.com/mxmCherry/openrtb/v15/openrtb2"
+	"github.com/mxmCherry/openrtb/v15/openrtb2"
 	"github.com/prebid/prebid-server/adapters"
 	"github.com/prebid/prebid-server/cache/skanidlist"
 	"github.com/prebid/prebid-server/errortypes"
@@ -89,7 +89,7 @@ func NewTaurusXBidder(client *http.Client, uri, useast, jp, sg string) *adapter 
 }
 
 // MakeRequests ...
-func (adapter *adapter) MakeRequests(request *openrtb.BidRequest, _ *adapters.ExtraRequestInfo) ([]*adapters.RequestData, []error) {
+func (adapter *adapter) MakeRequests(request *openrtb2.BidRequest, _ *adapters.ExtraRequestInfo) ([]*adapters.RequestData, []error) {
 	numRequests := len(request.Imp)
 
 	requestData := make([]*adapters.RequestData, 0, numRequests)
@@ -134,10 +134,16 @@ func (adapter *adapter) MakeRequests(request *openrtb.BidRequest, _ *adapters.Ex
 			Rewarded: taurusxExt.Reward,
 		}
 
-		thisImp.Video.Ext, err = json.Marshal(&impVideoExt)
-		if err != nil {
-			errs = append(errs, err)
-			continue
+		if thisImp.Video != nil {
+			videoCopy := *thisImp.Video
+
+			videoCopy.Ext, err = json.Marshal(&impVideoExt)
+			if err != nil {
+				errs = append(errs, err)
+				continue
+			}
+
+			thisImp.Video = &videoCopy
 		}
 
 		if thisImp.Banner != nil {
@@ -179,7 +185,7 @@ func (adapter *adapter) MakeRequests(request *openrtb.BidRequest, _ *adapters.Ex
 		}
 
 		// reinit the values in the request object
-		request.Imp = []openrtb.Imp{thisImp}
+		request.Imp = []openrtb2.Imp{thisImp}
 
 		// json marshal the request
 		reqJSON, err := json.Marshal(request)
@@ -231,7 +237,7 @@ func (adapter *adapter) MakeRequests(request *openrtb.BidRequest, _ *adapters.Ex
 }
 
 // MakeBids ...
-func (adapter *adapter) MakeBids(_ *openrtb.BidRequest, externalRequest *adapters.RequestData, response *adapters.ResponseData) (*adapters.BidderResponse, []error) {
+func (adapter *adapter) MakeBids(_ *openrtb2.BidRequest, externalRequest *adapters.RequestData, response *adapters.ResponseData) (*adapters.BidderResponse, []error) {
 	if response.StatusCode == http.StatusNoContent {
 		return nil, nil
 	}
@@ -248,7 +254,7 @@ func (adapter *adapter) MakeBids(_ *openrtb.BidRequest, externalRequest *adapter
 		}}
 	}
 
-	var bidResp openrtb.BidResponse
+	var bidResp openrtb2.BidResponse
 	if err := json.Unmarshal(response.Body, &bidResp); err != nil {
 		return nil, []error{&errortypes.BadServerResponse{
 			Message: err.Error(),
@@ -261,7 +267,7 @@ func (adapter *adapter) MakeBids(_ *openrtb.BidRequest, externalRequest *adapter
 
 	bidResponse := adapters.NewBidderResponseWithBidsCapacity(len(bidResp.SeatBid[0].Bid))
 
-	var bidReq openrtb.BidRequest
+	var bidReq openrtb2.BidRequest
 	if err := json.Unmarshal(externalRequest.Body, &bidReq); err != nil {
 		return nil, []error{err}
 	}

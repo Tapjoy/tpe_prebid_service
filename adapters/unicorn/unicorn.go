@@ -125,7 +125,7 @@ func (a *adapter) MakeRequests(request *openrtb2.BidRequest, requestInfo *adapte
 		var unicornExt openrtb_ext.ExtImpUnicorn
 		if err = json.Unmarshal(bidderExt.Bidder, &unicornExt); err != nil {
 			errs = append(errs, &errortypes.BadInput{
-				Message: fmt.Sprintf("Error while decoding imp[%d].ext: %s", i, err),
+				Message: err.Error(),
 			})
 			continue
 		}

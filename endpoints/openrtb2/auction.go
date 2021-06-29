@@ -119,7 +119,7 @@ func (deps *endpointDeps) Auction(w http.ResponseWriter, r *http.Request, _ http
 	// to compute the auction timeout.
 	start := time.Now()
 
-	ctx := context.Background()
+	ctx := r.Context()
 
 	ao := analytics.AuctionObject{
 		Status:    http.StatusOK,

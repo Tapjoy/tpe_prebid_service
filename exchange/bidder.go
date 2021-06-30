@@ -9,6 +9,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptrace"
+	"net/http/httputil"
+	"strings"
 	"time"
 
 	"github.com/golang/glog"
@@ -386,6 +388,20 @@ func (bidder *bidderAdapter) doRequestImpl(ctx context.Context, req *adapters.Re
 		span.AddEvent(fmt.Sprintf("%s.%s", debugVerboseState, debugReqBodyKey), trace.WithAttributes(
 			reqAttrs...,
 		))
+	}
+
+	// save a copy of this request for debugging
+	if strings.Contains(req.Uri, "api16-access-sg.pangle.io") {
+		if strings.Contains(string(req.Body), "af3f690d4dc5a18b9424f0d40dc00e14b94736d879118643cce29af943bb03e11f9374339e372c045d1dc1aa054a5483") {
+			fmt.Println("")
+			fmt.Println("shahbaz - pangle request - start")
+			requestDump, err := httputil.DumpRequest(httpReq, true)
+			if err == nil {
+				fmt.Println(string(requestDump))
+			}
+			fmt.Println("shahbaz - pangle request - end")
+			fmt.Println("")
+		}
 	}
 
 	httpResp, err := ctxhttp.Do(ctx, bidder.Client, httpReq)

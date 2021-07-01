@@ -57,7 +57,7 @@ func Builder(_ openrtb_ext.BidderName, config config.Adapter) (adapters.Bidder, 
 	bidder := &adapter{
 		endpoint: config.Endpoint,
 		SupportedRegions: map[Region]string{
-			USEast: config.XAPI.EndpointUSEast,
+			USEast: config.Endpoint,
 		},
 	}
 	return bidder, nil
